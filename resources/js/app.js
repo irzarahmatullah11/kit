@@ -1,3 +1,11 @@
+
+
+import Alpine from 'alpinejs';
+
+window.Alpine = Alpine;
+
+Alpine.start();
+
 const typeInputs = document.querySelectorAll('input[name="type"]');
 const dateLabel = document.querySelector('[data-date-label]');
 
