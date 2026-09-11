@@ -9,9 +9,9 @@ class Employ extends Model
     protected $table = 'employ';
     protected $primaryKey = 'employ_id';
     public $timestamps = false;
-    public function role()
+    public function roleData()
     {
-        // Parameter kedua adalah foreign key di tabel employ
-        return $this->belongsTo(Role::class, 'role_id'); 
+        // belongsTo(Model, foreign_key, owner_key)
+        return $this->belongsTo(Role::class, 'role', 'role_id'); 
     }
 }

@@ -12,7 +12,7 @@ use App\Models\User;
 class ManageAccount extends Controller
 {
     public function showAccounts():View{
-        $employees = Employ::with('role')->get();
+        $employees = Employ::with('roleData')->get();
         return view('manageacc', compact('employees'));
     }
 

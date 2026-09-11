@@ -30,7 +30,7 @@
                                 <td>{{ $employee->employ_name }}</td>
                                 <td>{{ $employee->email }}</td>
                                 <!-- Mengambil role_name dari relasi tabel role -->
-                                <td>{{ $employee->role->role_name ?? 'Tidak ada role' }}</td>
+                                <td>{{ $employee->roleData->role_name ?? 'Tidak ada role' }}</td>
                                 <td class="text-center">
                                     <!-- Tombol Edit dan Hapus (Disabled) -->
                                     <button type="button" class="btn btn-sm btn-warning" disabled>Edit</button>
