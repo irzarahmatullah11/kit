@@ -18,7 +18,6 @@
                             <th>ID Employee</th>
                             <th>Nama Employee</th>
                             <th>Email</th>
-                            <th>Password</th>
                             <th>Role</th>
                             <th class="text-center" width="15%">Aksi</th>
                         </tr>
@@ -30,12 +29,6 @@
                                 <td>{{ $employee->employ_id }}</td>
                                 <td>{{ $employee->employ_name }}</td>
                                 <td>{{ $employee->email }}</td>
-                                
-                                <!-- Menampilkan kolom password -->
-                                <td class="text-truncate" style="max-width: 150px;" title="{{ $employee->password }}">
-                                    {{ $employee->password }}
-                                </td>
-                                
                                 <!-- Mengambil role_name dari relasi tabel role -->
                                 <td>{{ $employee->role->role_name ?? 'Tidak ada role' }}</td>
                                 <td class="text-center">
