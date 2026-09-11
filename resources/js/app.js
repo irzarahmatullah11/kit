@@ -1,3 +1,11 @@
+
+
+import Alpine from 'alpinejs';
+
+window.Alpine = Alpine;
+
+Alpine.start();
+
 const typeInputs = document.querySelectorAll('input[name="type"]');
 const dateLabel = document.querySelector('[data-date-label]');
 
@@ -21,6 +29,7 @@ const setChargeModal = (isOpen) => {
 };
 openChargeModal?.addEventListener('click', () => setChargeModal(true));
 closeChargeModalButtons.forEach((button) => button.addEventListener('click', () => setChargeModal(false)));
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setChargeModal(false); });
 
 const hoverPanel = document.querySelector('[data-detail-hover]');
 const hoverPanelBody = hoverPanel?.querySelector('[data-detail-hover-body]');
