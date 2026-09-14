@@ -1,52 +1,93 @@
 <x-app-layout>
-    <div class="container mt-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3>Daftar Akun Employee (Admin)</h3>
-            
-            <!-- Tombol Tambah User (Disabled) -->
-            <button type="button" class="btn btn-primary" disabled>
-                + Tambah User
-            </button>
-        </div>
-
-        <div class="card">
-            <div class="card-body p-0 text-nowrap table-responsive">
-                <table class="table table-striped table-hover mb-0">
-                    <thead class="table-dark">
-                        <tr>
-                            <th class="text-center" width="5%">No</th>
-                            <th>ID Employee</th>
-                            <th>Nama Employee</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th class="text-center" width="15%">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($employees as $index => $employee)
-                            <tr>
-                                <td class="text-center">{{ $index + 1 }}</td>
-                                <td>{{ $employee->employ_id }}</td>
-                                <td>{{ $employee->employ_name }}</td>
-                                <td>{{ $employee->email }}</td>
-                                <!-- Mengambil role_name dari relasi tabel role -->
-                                <td>{{ $employee->roleData->role_name ?? 'Tidak ada role' }}</td>
-                                <td class="text-center">
-                                    <!-- Tombol Edit dan Hapus (Disabled) -->
-                                    <button type="button" class="btn btn-sm btn-warning" disabled>Edit</button>
-                                    <button type="button" class="btn btn-sm btn-danger" disabled>Hapus</button>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="text-center text-muted py-3">
-                                    Tidak ada data employee ditemukan.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+    <div class="app-shell">
+        @if (session('success'))
+            <div class="alert alert-success" role="status">
+                <span class="alert-icon">&#10003;</span>
+                <span>{{ session('success') }}</span>
             </div>
-        </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="alert alert-error" role="alert">
+                <span class="alert-icon">!</span>
+                <span>{{ $errors->first() }}</span>
+            </div>
+        @endif
+        <main class="main-content">
+            <!-- Header (Topbar) -->
+            <header class="topbar">
+                <div>
+                    <span class="eyebrow">ADMIN PANEL</span>
+                    <h1>Daftar Akun Employee</h1>
+                </div>
+                <div class="topbar-actions">
+                    <div class="date-chip">{{ now()->translatedFormat('l, d F Y') }}</div>
+                    <!-- Tombol Tambah User (Disabled), menggunakan .icon-button dari app.css -->
+                    <a href="{{ route('account.create') }}">
+                        <button class="icon-button" type="button" aria-label="Tambah User" title="Tambah User">
+                            +
+                        </button>
+                    </a>
+                </div>
+            </header>
+
+            <!-- Tabel Data Employee -->
+            <section class="history-panel" aria-labelledby="employee-list-title">
+                <div class="section-heading history-heading">
+                    <div>
+                        <span class="eyebrow">DATA AKUN</span>
+                        <h2 id="employee-list-title">List Employee (Admin)</h2>
+                    </div>
+                </div>
+
+                <div class="history-table-wrap">
+                    <table class="account-table">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>ID Employee</th>
+                                <th>Nama Employee</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($employees as $index => $employee)
+                                <tr>
+                                    <td>{{ $index + 1 }}</td>
+                                    <td>{{ $employee->employ_id }}</td>
+                                    <td><strong>{{ $employee->employ_name }}</strong></td>
+                                    <td>{{ $employee->email }}</td>
+                                    <td>{{ $employee->roleData->role_name ?? 'Tidak ada role' }}</td>
+                                    <td>
+                                        <div style="display: flex; gap: 12px; align-items: center;">
+                                            <a href="{{ route('account.edit', $employee->employ_id) }}" class="edit-link" style="background: none; border: none; padding: 0;">Edit</a>
+
+                                            <form action="{{ route('account.delete', $employee->employ_id) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Yakin ingin menghapus data ini?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="edit-link" style="background: none; border: none; padding: 0; color: var(--coral); cursor: pointer;">Hapus</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" style="padding: 0; border: none;">
+                                        <!-- Empty State disamakan dengan gaya app.css -->
+                                        <div class="empty-state">
+                                            <div class="empty-icon">!</div>
+                                            <h3>Belum ada data employee</h3>
+                                            <p>Tidak ada data employee ditemukan dalam sistem.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
     </div>
 </x-app-layout>
