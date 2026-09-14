@@ -1,5 +1,35 @@
-<x-app-layout>
+<!DOCTYPE html>
+<html lang="id">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Ruang Biaya | Catatan pengeluaran</title>
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    </head>
+    <body>
         <div class="app-shell">
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-top">
+                    <a class="brand" href="{{ route('dashboard') }}" aria-label="Ruang Biaya">
+                        <span class="brand-mark">RB</span><span class="brand-text">Ruang Biaya</span>
+                    </a>
+                    <button class="sidebar-toggle" type="button" data-sidebar-toggle aria-label="Sembunyikan sidebar">
+                        <span class="sidebar-toggle-icon">⟨</span>
+                    </button>
+                </div>
+                <nav class="sidebar-nav" aria-label="Navigasi utama">
+                    <a class="sidebar-nav-link {{ $page === 'dashboard' ? 'is-active' : '' }}" href="{{ route('dashboard') }}"><span>◈</span><span class="nav-label">Dashboard</span></a>
+                    <a class="sidebar-nav-link {{ $page === 'one_time' ? 'is-active' : '' }}" href="{{ route('charges.one-time') }}"><span>+</span><span class="nav-label">One-time / Charge</span></a>
+                    <a class="sidebar-nav-link {{ $page === 'monthly' ? 'is-active' : '' }}" href="{{ route('charges.monthly') }}"><span>↻</span><span class="nav-label">Bulanan</span></a>
+                </nav>
+                <div class="sidebar-intro">
+                    <span class="eyebrow">PERSONAL FINANCE</span>
+                    <h2>Lebih tenang saat semua tercatat.</h2>
+                    <p>Kelola tagihan bulanan dan pengeluaran sekali bayar di satu tempat.</p>
+                </div>
+                <div class="sidebar-footer"><span class="status-dot"></span><span>Penyimpanan aktif</span></div>
+            </aside>
+
             <main class="main-content">
                 <header class="topbar">
                     <div><span class="eyebrow">{{ $page === 'dashboard' ? 'MATRIX DASHBOARD' : ($page === 'one_time' ? 'ONE-TIME / CHARGE' : 'PEMBAYARAN BULANAN') }}</span><h1>{{ $page === 'dashboard' ? 'Matrix Dashboard' : ($page === 'one_time' ? 'One-time / Charge' : 'Pembayaran bulanan') }}</h1></div>
@@ -43,94 +73,30 @@
                     </section>
 
                     <section class="summary-grid" aria-label="Status dashboard">
-                        <a href="{{ route('dashboard', ['status' => 'Done']) }}" class="summary-card status-filter-card {{ $activeStatus === 'Done' ? 'is-active' : '' }}">
+                        <div class="summary-card status-filter-card {{ $activeStatus === 'Done' ? 'is-active' : '' }}" aria-disabled="true">
                             <div class="summary-icon summary-icon-gold">✓</div>
                             <div>
                                 <span class="summary-label">Status Done</span>
                                 <strong>{{ $dashboardTotals['doneCount'] ?? 0 }}</strong>
                             </div>
                             <span class="summary-caption">penyelesaian selesai</span>
-                        </a>
-                        <a href="{{ route('dashboard', ['status' => 'In Progress']) }}" class="summary-card status-filter-card {{ $activeStatus === 'In Progress' ? 'is-active' : '' }}">
+                        </div>
+                        <div class="summary-card status-filter-card {{ $activeStatus === 'In Progress' ? 'is-active' : '' }}" aria-disabled="true">
                             <div class="summary-icon">⏳</div>
                             <div>
                                 <span class="summary-label">In Progress</span>
                                 <strong>{{ $dashboardTotals['progressCount'] ?? 0 }}</strong>
                             </div>
                             <span class="summary-caption">masih berjalan</span>
-                        </a>
+                        </div>
                         <a href="{{ route('dashboard') }}" class="summary-card summary-card-note status-filter-card {{ !$activeStatus ? 'is-active' : '' }}">
                             <span class="summary-label">Total catatan</span>
-                            <strong>{{ $dashboardRows->count() }}</strong>
+                            <strong>{{ $dashboardTotalCount }}</strong>
                             <span class="summary-caption">{{ $activeStatus ? 'filter aktif: ' . $activeStatus : 'semua baris matrix' }}</span>
                         </a>
                     </section>
 
-                    @if ($activeStatus)
-                        <div class="status-detail-bar">
-                            <span class="eyebrow">STATUS DETAIL</span>
-                            <div class="status-detail-content">
-                                <strong>{{ $activeStatus }}</strong>
-                                <span>{{ $dashboardRows->count() }} item tampil</span>
-                            </div>
-                            <a href="{{ route('dashboard') }}" class="clear-filter-link">Tampilkan semua</a>
-                        </div>
-                    @endif
-
-                    <section class="history-panel" aria-labelledby="dashboard-matrix-title">
-                        <div class="section-heading history-heading">
-                            <div>
-                                <span class="eyebrow">MATRIX</span>
-                                <h2 id="dashboard-matrix-title">Project billing matrix</h2>
-                            </div>
-                            <span class="record-count">{{ $dashboardRows->count() }} total</span>
-                        </div>
-
-                        @if ($dashboardRows->count())
-                            <div class="history-table-wrap">
-                                <table class="history-table">
-                                    <thead>
-                                        <tr>
-                                            <th>No.</th>
-                                            <th>PM</th>
-                                            <th>Project</th>
-                                            <th>USER</th>
-                                            <th>Type</th>
-                                            <th>Cost center</th>
-                                            <th>Kontrak / PO / JO</th>
-                                            <th>Nilai kontrak</th>
-                                            <th>Periode</th>
-                                            <th>Tanggal kontrak</th>
-                                            <th>Due date</th>
-                                            <th>Status</th>
-                                            <th>Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($dashboardRows as $index => $row)
-                                            <tr data-hover-detail="{{ route('charges.show', $row) }}">
-                                                <td>{{ $index + 1 }}</td>
-                                                <td>{{ $row->pm ?: '-' }}</td>
-                                                <td><strong>{{ $row->name }}</strong><span class="table-note">{{ $row->note ?: 'Tanpa catatan' }}</span></td>
-                                                <td>{{ $row->user_name ?: '-' }}</td>
-                                                <td>{{ $row->type === 'monthly' ? 'Bulanan' : 'One-time' }}</td>
-                                                <td>{{ $row->cost_center ?: '-' }}</td>
-                                                <td>{{ $row->contract_reference ?: '-' }}</td>
-                                                <td class="money-cell">Rp {{ number_format($row->amount, 0, ',', '.') }}</td>
-                                                <td>{{ $row->procurement_period }}</td>
-                                                <td>{{ $row->contract_date?->translatedFormat('d M Y') ?: '-' }}</td>
-                                                <td>{{ $row->due_date?->translatedFormat('d M Y') ?: '-' }}</td>
-                                                <td><button type="button" class="payment-status-button {{ $row->status === 'Done' ? 'status-done' : 'status-progress' }}">{{ $row->status === 'Done' ? 'Done' : 'On progress' }}</button></td>
-                                                <td><a class="edit-link" href="{{ route('charges.edit', $row) }}">Edit</a></td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @else
-                            <div class="empty-state"><div class="empty-icon">+</div><h3>Belum ada data matrix</h3><p>Belum ada catatan project yang tersedia untuk dashboard ini.</p></div>
-                        @endif
-                    </section>
+                 
                 @else
                     <div class="content-grid">
                         <section class="form-panel charge-form-panel" aria-labelledby="form-title" data-charge-modal aria-hidden="true">
@@ -179,4 +145,5 @@
                 @endif
             </main>
         </div>
-</x-app-layout>
+    </body>
+</html>

@@ -2,16 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class Employ extends Model
+class Employ extends Authenticatable
 {
-    protected $table = 'employ';
+    protected $table = 'employ'; // Sesuaikan dengan nama tabel hasil migrasi
     protected $primaryKey = 'employ_id';
-    public $timestamps = false;
-    public function roleData()
-    {
-        // belongsTo(Model, foreign_key, owner_key)
-        return $this->belongsTo(Role::class, 'role', 'role_id'); 
-    }
+    public $incrementing = false;
+    protected $keyType = 'string';
+
+    protected $fillable = ['employ_id', 'employ_name', 'email', 'password', 'role'];
 }
