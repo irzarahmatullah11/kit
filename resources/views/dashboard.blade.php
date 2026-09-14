@@ -169,6 +169,29 @@
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
     });
+
+<!-- Area Grafik Analitik -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold text-muted mb-3">Rasio Status Proyek</h5>
+                    <canvas id="statusChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold text-muted mb-3">Tren Kategori Layanan</h5>
+                    <canvas id="kategoriChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+
 </script>
 </body>
 </html>
