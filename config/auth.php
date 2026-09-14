@@ -15,10 +15,12 @@ return [
     |
     */
 
-    'defaults' => [
-        'guard' => env('AUTH_GUARD', 'web'),
-        'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
+    'providers' => [
+    'users' => [
+        'driver' => 'eloquent',
+        'model' => App\Models\Employ::class, // Diubah dari User::class
     ],
+],
 
     /*
     |--------------------------------------------------------------------------

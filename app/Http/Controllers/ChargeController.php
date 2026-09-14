@@ -15,7 +15,7 @@ class ChargeController extends Controller
         return $this->page(
             'dashboard',
             ProjectBilling::query(),
-            $request->query('status'),
+            null,
             $request->query('service'),
             $request->query('search'),
             $request->query('filters', [])
@@ -208,6 +208,7 @@ class ChargeController extends Controller
         return view('welcome', [
             'charges' => $charges,
             'dashboardRows' => $dashboardRows,
+            'dashboardTotalCount' => ProjectBilling::count(),
             'page' => $page,
             'activeStatus' => $status,
             'activeService' => $service,
