@@ -15,6 +15,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/charges', fn () => to_route('dashboard'))->name('charges.store');
 
     Route::get('/account', [ManageAccount::class, 'showAccounts'])->name('account.show');
+    Route::get('/account/create', [ManageAccount::class, 'createAccount'])->name('account.create');
+    Route::post('/account/create', [ManageAccount::class, 'storeAccount'])->name('account.store');
+    Route::get('/account/edit/{id}', [ManageAccount::class, 'editAccount'])->name('account.edit');
+    Route::put('/account/edit/{id}', [ManageAccount::class, 'editpush'])->name('account.edit.push');
+    Route::delete('/account/delete/{id}', [ManageAccount::class, 'deleteAccount'])->name('account.delete');
 });
 
 require __DIR__.'/auth.php';
