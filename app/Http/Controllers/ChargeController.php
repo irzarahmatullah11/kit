@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Employ;
 use App\Models\Project;
 use App\Models\ProjectBilling;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class ChargeController extends Controller
@@ -39,11 +41,83 @@ class ChargeController extends Controller
         return view('charges.show', compact('charge'));
     }
 
+    public function print(ProjectBilling $charge): View
+    {
+        $charge->load('project.pm');
+
+        return view('charges.print', compact('charge'));
+    }
+
     public function edit(ProjectBilling $charge): View
     {
         $charge->load('project.pm');
 
         return view('charges.edit', compact('charge'));
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'project_name' => ['required', 'string', 'max:120'],
+            'user' => ['required', 'string', 'max:120'],
+            'pm_id' => ['required', 'integer', 'exists:employ,employ_id'],
+            'cost_center' => ['required', 'string', 'max:80'],
+            'no_kontrak' => ['required', 'string', 'max:120'],
+            'nilai_kontrak' => ['required', 'numeric', 'min:0'],
+            'tgl_kontrak' => ['required', 'date'],
+            'kategori_layanan' => ['required', 'in:MS,OTM'],
+            'tipe_pengadaan' => ['nullable', 'string', 'max:80'],
+            'priode' => ['required', 'string', 'max:30'],
+            'due_date_kontrak' => ['nullable', 'date'],
+            'tgl_pembuatan_ba' => ['nullable', 'date'],
+            'tgl_paraf_pm' => ['nullable', 'date'],
+            'tgl_ttd_manager' => ['nullable', 'date'],
+            'tgl_submit_dokumen' => ['nullable', 'date'],
+            'tgl_permintaan_invoice' => ['nullable', 'date'],
+            'note' => ['nullable', 'string'],
+        ]);
+
+        $statusDates = [
+            'tgl_pembuatan_ba',
+            'tgl_paraf_pm',
+            'tgl_ttd_manager',
+            'tgl_submit_dokumen',
+            'tgl_permintaan_invoice',
+        ];
+        $data['status'] = collect($statusDates)->every(fn (string $date) => filled($data[$date] ?? null))
+            ? 'Done'
+            : 'In Progress';
+
+        DB::transaction(function () use ($data): void {
+            $project = Project::create([
+                'project_name' => $data['project_name'],
+                'user' => $data['user'],
+                'cost_center' => $data['cost_center'],
+                'no_kontrak' => $data['no_kontrak'],
+                'nilai_kontrak' => $data['nilai_kontrak'],
+                'tgl_kontrak' => $data['tgl_kontrak'],
+                'pm_id' => $data['pm_id'],
+            ]);
+
+            ProjectBilling::create([
+                'project_id' => $project->project_id,
+                'kategori_layanan' => $data['kategori_layanan'],
+                'tipe_pengadaan' => $data['tipe_pengadaan'],
+                'priode' => $data['priode'],
+                'due_date_kontrak' => $data['due_date_kontrak'],
+                'tgl_pembuatan_ba' => $data['tgl_pembuatan_ba'],
+                'tgl_paraf_pm' => $data['tgl_paraf_pm'],
+                'tgl_ttd_manager' => $data['tgl_ttd_manager'],
+                'tgl_submit_dokumen' => $data['tgl_submit_dokumen'],
+                'tgl_permintaan_invoice' => $data['tgl_permintaan_invoice'],
+                'status' => $data['status'],
+                'note' => $data['note'],
+            ]);
+        });
+
+        $destination = $data['kategori_layanan'] === 'OTM' ? 'charges.one-time' : 'charges.monthly';
+
+        return to_route($destination)->with('success', 'Pembayaran berhasil ditambahkan.');
     }
 
     public function update(Request $request, ProjectBilling $charge): RedirectResponse
@@ -61,11 +135,22 @@ class ChargeController extends Controller
             'due_date_kontrak' => ['nullable', 'date'],
             'tgl_pembuatan_ba' => ['nullable', 'date'],
             'tgl_paraf_pm' => ['nullable', 'date'],
+            'tgl_ttd_manager' => ['nullable', 'date'],
             'tgl_submit_dokumen' => ['nullable', 'date'],
             'tgl_permintaan_invoice' => ['nullable', 'date'],
-            'status' => ['required', 'in:Done,In Progress'],
             'note' => ['nullable', 'string'],
         ]);
+
+        $statusDates = [
+            'tgl_pembuatan_ba',
+            'tgl_paraf_pm',
+            'tgl_ttd_manager',
+            'tgl_submit_dokumen',
+            'tgl_permintaan_invoice',
+        ];
+        $data['status'] = collect($statusDates)->every(fn (string $date) => filled($data[$date] ?? null))
+            ? 'Done'
+            : 'In Progress';
 
         $charge->project->update([
             'project_name' => $data['project_name'],
@@ -205,6 +290,11 @@ class ChargeController extends Controller
             'status' => $dashboardRows->map(fn ($row) => $row->status)->filter()->unique()->sort()->values()->all(),
         ];
 
+        $pmOptions = Employ::query()
+            ->where('role', 1)
+            ->orderBy('employ_name')
+            ->get(['employ_id', 'employ_name']);
+
         return view('welcome', [
             'charges' => $charges,
             'dashboardRows' => $dashboardRows,
@@ -215,6 +305,7 @@ class ChargeController extends Controller
             'activeSearch' => $search,
             'activeFilters' => $normalizedFilters ?? [],
             'filterOptions' => $filterOptions,
+            'pmOptions' => $pmOptions,
             'monthlyTotal' => $monthly->sum('nilai_bulan'),
             'monthlyCount' => $monthly->count(),
             'oneTimeTotal' => $oneTime->sum('nilai_bulan'),

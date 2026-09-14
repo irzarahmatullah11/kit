@@ -39,6 +39,10 @@
                         <strong>{{ $charge->tgl_paraf_pm?->translatedFormat('d M Y') ?? '-' }}</strong>
                     </div>
                     <div class="detail-text-row">
+                        <span>Tanda Tangan Manager</span>
+                        <strong>{{ $charge->tgl_ttd_manager?->translatedFormat('d M Y') ?? '-' }}</strong>
+                    </div>
+                    <div class="detail-text-row">
                         <span>Tanggal submit dokumen</span>
                         <strong>{{ $charge->tgl_submit_dokumen?->translatedFormat('d M Y') ?? '-' }}</strong>
                     </div>
