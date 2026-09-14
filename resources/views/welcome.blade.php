@@ -21,6 +21,7 @@
                     <a class="sidebar-nav-link {{ $page === 'dashboard' ? 'is-active' : '' }}" href="{{ route('dashboard') }}"><span>◈</span><span class="nav-label">Dashboard</span></a>
                     <a class="sidebar-nav-link {{ $page === 'one_time' ? 'is-active' : '' }}" href="{{ route('charges.one-time') }}"><span>+</span><span class="nav-label">One-time / Charge</span></a>
                     <a class="sidebar-nav-link {{ $page === 'monthly' ? 'is-active' : '' }}" href="{{ route('charges.monthly') }}"><span>↻</span><span class="nav-label">Bulanan</span></a>
+                    <a class="sidebar-nav-link" href="{{ route('account.show') }}"><span>♙</span><span class="nav-label">Manage Account</span></a>
                 </nav>
                 <div class="sidebar-intro">
                     <span class="eyebrow">PERSONAL FINANCE</span>
@@ -103,17 +104,39 @@
                             <div class="modal-backdrop" data-close-charge-modal></div><div class="modal-card"><div class="section-heading"><div><span class="eyebrow">CATAT BIAYA</span><h2 id="form-title">Tambah pengeluaran</h2></div><button class="modal-close" type="button" data-close-charge-modal aria-label="Tutup form">&times;</button></div>
                             <form method="POST" action="{{ route('charges.store') }}" class="charge-form">
                                 @csrf
-                                <fieldset class="type-switcher">
-                                    <legend>Jenis pengeluaran</legend>
-                                    <label class="type-option"><input type="radio" name="type" value="monthly" @checked(old('type', 'monthly') === 'monthly')><span class="type-option-content"><strong>Bulanan</strong><small>Berulang setiap bulan</small></span><span class="radio-indicator"></span></label>
-                                    <label class="type-option"><input type="radio" name="type" value="one_time" @checked(old('type') === 'one_time')><span class="type-option-content"><strong>One-time</strong><small>Sekali bayar</small></span><span class="radio-indicator"></span></label>
-                                </fieldset>
-                                <div class="field-group"><label for="name">Nama biaya <span>*</span></label><input id="name" name="name" type="text" value="{{ old('name') }}" placeholder="Contoh: Internet rumah" maxlength="120" required></div>
                                 <div class="form-row">
-                                    <div class="field-group"><label for="amount">Nominal <span>*</span></label><div class="input-prefix"><span>Rp</span><input id="amount" name="amount" type="number" value="{{ old('amount') }}" min="1" step="1" placeholder="0" required></div></div>
-                                    <div class="field-group"><label for="occurred_on"><span data-date-label>Bulan</span> <span>*</span></label><input id="occurred_on" name="occurred_on" type="month" value="{{ old('occurred_on', now()->format('Y-m')) }}" required></div>
+                                    <div class="field-group"><label for="project_name">Project <span>*</span></label><input id="project_name" name="project_name" value="{{ old('project_name') }}" maxlength="120" required></div>
+                                    <div class="field-group"><label for="user">USER <span>*</span></label><input id="user" name="user" value="{{ old('user') }}" maxlength="120" required></div>
                                 </div>
-                                <div class="field-group"><label for="note">Note / Catatan <small>(opsional)</small></label><textarea id="note" name="note" rows="3" maxlength="500" placeholder="Tambahkan detail, pengingat, atau konteks biaya...">{{ old('note') }}</textarea></div>
+                                <div class="form-row">
+                                    <div class="field-group"><label for="pm_id">PM <span>*</span></label><select id="pm_id" name="pm_id" required><option value="">Pilih PM</option>@foreach ($pmOptions as $pm)<option value="{{ $pm->employ_id }}" @selected(old('pm_id') == $pm->employ_id)>{{ $pm->employ_name }}</option>@endforeach</select></div>
+                                    <div class="field-group"><label for="cost_center">Cost center <span>*</span></label><input id="cost_center" name="cost_center" value="{{ old('cost_center') }}" maxlength="80" required></div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="field-group"><label for="no_kontrak">Kontrak / PO / JO <span>*</span></label><input id="no_kontrak" name="no_kontrak" value="{{ old('no_kontrak') }}" maxlength="120" required></div>
+                                    <div class="field-group"><label for="nilai_kontrak">Nilai kontrak <span>*</span></label><input id="nilai_kontrak" name="nilai_kontrak" type="number" value="{{ old('nilai_kontrak') }}" min="0" required></div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="field-group"><label for="tgl_kontrak">Tanggal kontrak <span>*</span></label><input id="tgl_kontrak" name="tgl_kontrak" type="date" value="{{ old('tgl_kontrak') }}" required></div>
+                                    <div class="field-group"><label for="kategori_layanan">Kategori layanan <span>*</span></label><select id="kategori_layanan" name="kategori_layanan" required><option value="MS" @selected(old('kategori_layanan', $page === 'one_time' ? 'OTM' : 'MS') === 'MS')>MS</option><option value="OTM" @selected(old('kategori_layanan', $page === 'one_time' ? 'OTM' : 'MS') === 'OTM')>OTM</option></select></div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="field-group"><label for="tipe_pengadaan">Type pengadaan</label><input id="tipe_pengadaan" name="tipe_pengadaan" value="{{ old('tipe_pengadaan') }}" maxlength="80"></div>
+                                    <div class="field-group"><label for="priode">Periode pengadaan (bulan) <span>*</span></label><input id="priode" name="priode" value="{{ old('priode') }}" maxlength="30" required></div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="field-group"><label for="due_date_kontrak">Due Date</label><input id="due_date_kontrak" name="due_date_kontrak" type="date" value="{{ old('due_date_kontrak') }}"></div>
+                                    <div class="field-group"><label for="tgl_pembuatan_ba">Tanggal pembuatan BA</label><input id="tgl_pembuatan_ba" name="tgl_pembuatan_ba" type="date" value="{{ old('tgl_pembuatan_ba') }}"></div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="field-group"><label for="tgl_paraf_pm">Tanggal paraf PM</label><input id="tgl_paraf_pm" name="tgl_paraf_pm" type="date" value="{{ old('tgl_paraf_pm') }}"></div>
+                                    <div class="field-group"><label for="tgl_ttd_manager">Tanggal Tanda Tangan Manager</label><input id="tgl_ttd_manager" name="tgl_ttd_manager" type="date" value="{{ old('tgl_ttd_manager') }}"></div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="field-group"><label for="tgl_submit_dokumen">Tanggal submit dokumen</label><input id="tgl_submit_dokumen" name="tgl_submit_dokumen" type="date" value="{{ old('tgl_submit_dokumen') }}"></div>
+                                    <div class="field-group"><label for="tgl_permintaan_invoice">Tanggal permintaan invoice</label><input id="tgl_permintaan_invoice" name="tgl_permintaan_invoice" type="date" value="{{ old('tgl_permintaan_invoice') }}"></div>
+                                </div>
+                                <div class="field-group"><label for="note">Note / Catatan</label><textarea id="note" name="note" rows="3" maxlength="500">{{ old('note') }}</textarea></div>
                                 <button class="submit-button" type="submit"><span>Simpan biaya</span><span aria-hidden="true">&#8594;</span></button>
                             </form></div>
                         </section>
@@ -135,7 +158,7 @@
                             </form>
 
                             @if ($charges->count())
-                                <div class="history-table-wrap"><table class="history-table"><thead><tr><th>No.</th><th>PM</th><th>Project</th><th>USER</th><th>Type pengadaan</th><th>Cost center</th><th>Kontrak / PO / JO</th><th>Nilai kontrak<br>(nominal uang)</th><th>Periode pengadaan<br>(bulan)</th><th>Tanggal kontrak / PO / JO</th><th>Masa kontrak<br>Due Date</th><th>Status pembayaran</th><th>Aksi</th></tr></thead><tbody>@foreach ($charges as $index => $row)<tr data-hover-detail="{{ route('charges.show', $row) }}"><td>{{ $charges->firstItem() + $index }}</td><td>{{ $row->pm ?: '-' }}</td><td><strong>{{ $row->name }}</strong><span class="table-note">{{ $row->note ?: 'Tanpa catatan' }}</span></td><td>{{ $row->user_name ?: '-' }}</td><td>{{ $row->procurement_type }}</td><td>{{ $row->cost_center ?: '-' }}</td><td>{{ $row->contract_reference ?: '-' }}</td><td class="money-cell">Rp {{ number_format($row->amount, 0, ',', '.') }}</td><td>{{ $row->procurement_period }}</td><td>{{ $row->contract_date?->translatedFormat('d M Y') ?: '-' }}</td><td>{{ $row->due_date?->translatedFormat('d M Y') ?: '-' }}</td><td><button type="button" class="payment-status-button {{ $row->status === 'Done' ? 'status-done' : 'status-progress' }}">{{ $row->status === 'Done' ? 'Done' : 'On progress' }}</button></td><td><a class="edit-link" href="{{ route('charges.edit', $row) }}">Edit</a></td></tr>@endforeach</tbody></table></div>
+                                <div class="history-table-wrap"><table class="history-table"><thead><tr><th>No.</th><th>PM</th><th>Project</th><th>USER</th><th>Type pengadaan</th><th>Cost center</th><th>Kontrak / PO / JO</th><th>Nilai kontrak<br>(nominal uang)</th><th>Periode pengadaan<br>(bulan)</th><th>Tanggal kontrak / PO / JO</th><th>Masa kontrak<br>Due Date</th><th>Status pembayaran</th><th>Aksi</th><th>Cetak PDF</th></tr></thead><tbody>@foreach ($charges as $index => $row)<tr data-hover-detail="{{ route('charges.show', $row) }}"><td>{{ $charges->firstItem() + $index }}</td><td>{{ $row->pm ?: '-' }}</td><td><strong>{{ $row->name }}</strong><span class="table-note">{{ $row->note ?: 'Tanpa catatan' }}</span></td><td>{{ $row->user_name ?: '-' }}</td><td>{{ $row->procurement_type }}</td><td>{{ $row->cost_center ?: '-' }}</td><td>{{ $row->contract_reference ?: '-' }}</td><td class="money-cell">Rp {{ number_format($row->amount, 0, ',', '.') }}</td><td>{{ $row->procurement_period }}</td><td>{{ $row->contract_date?->translatedFormat('d M Y') ?: '-' }}</td><td>{{ $row->due_date?->translatedFormat('d M Y') ?: '-' }}</td><td><button type="button" class="payment-status-button {{ $row->status === 'Done' ? 'status-done' : 'status-progress' }}">{{ $row->status === 'Done' ? 'Done' : 'On progress' }}</button></td><td><a class="edit-link" href="{{ route('charges.edit', $row) }}">Edit</a></td><td><a class="edit-link" href="{{ route('charges.print', $row) }}" target="_blank" rel="noopener">Cetak</a></td></tr>@endforeach</tbody></table></div>
                             @else
                                 <div class="empty-state"><div class="empty-icon">+</div><h3>Belum ada pembayaran</h3><p>Belum ada data pada kategori ini.</p></div>
                             @endif

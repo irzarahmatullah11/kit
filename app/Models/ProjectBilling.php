@@ -7,82 +7,86 @@ use Illuminate\Database\Eloquent\Model;
 
 class ProjectBilling extends Model
 {
-	protected $table = 'project_billing';
-	protected $primaryKey = 'billing_id';
-	public $timestamps = false;
-	protected $fillable = ['kategori_layanan', 'tipe_pengadaan', 'priode', 'due_date_kontrak', 'tgl_pembuatan_ba', 'tgl_paraf_pm', 'tgl_submit_dokumen', 'tgl_permintaan_invoice', 'status', 'note'];
+    protected $table = 'project_billing';
 
-	protected $casts = [
-		'nilai_bulan' => 'decimal:2',
-		'due_date_kontrak' => 'date',
-		'tgl_pembuatan_ba' => 'date',
-		'tgl_paraf_pm' => 'date',
-		'tgl_submit_dokumen' => 'date',
-		'tgl_permintaan_invoice' => 'date',
-	];
+    protected $primaryKey = 'billing_id';
 
-	public function project()
-	{
-		return $this->belongsTo(Project::class, 'project_id', 'project_id');
-	}
+    public $timestamps = false;
 
-	protected function name(): Attribute
-	{
-		return Attribute::get(fn () => $this->project?->project_name ?? '-');
-	}
+    protected $fillable = ['project_id', 'kategori_layanan', 'tipe_pengadaan', 'priode', 'due_date_kontrak', 'tgl_pembuatan_ba', 'tgl_paraf_pm', 'tgl_ttd_manager', 'tgl_submit_dokumen', 'tgl_permintaan_invoice', 'status', 'note'];
 
-	protected function type(): Attribute
-	{
-		return Attribute::get(fn () => $this->kategori_layanan === 'OTM' ? 'one_time' : 'monthly');
-	}
+    protected $casts = [
+        'nilai_bulan' => 'decimal:2',
+        'due_date_kontrak' => 'date',
+        'tgl_pembuatan_ba' => 'date',
+        'tgl_paraf_pm' => 'date',
+        'tgl_ttd_manager' => 'date',
+        'tgl_submit_dokumen' => 'date',
+        'tgl_permintaan_invoice' => 'date',
+    ];
 
-	protected function amount(): Attribute
-	{
-		return Attribute::get(fn () => $this->project?->nilai_kontrak ?? $this->nilai_bulan ?? 0);
-	}
+    public function project()
+    {
+        return $this->belongsTo(Project::class, 'project_id', 'project_id');
+    }
 
-	protected function pm(): Attribute
-	{
-		return Attribute::get(fn () => $this->project?->pm?->employ_name);
-	}
+    protected function name(): Attribute
+    {
+        return Attribute::get(fn () => $this->project?->project_name ?? '-');
+    }
 
-	protected function userName(): Attribute
-	{
-		return Attribute::get(fn () => $this->project?->user);
-	}
+    protected function type(): Attribute
+    {
+        return Attribute::get(fn () => $this->kategori_layanan === 'OTM' ? 'one_time' : 'monthly');
+    }
 
-	protected function procurementType(): Attribute
-	{
-		return Attribute::get(fn () => $this->tipe_pengadaan ?: '-');
-	}
+    protected function amount(): Attribute
+    {
+        return Attribute::get(fn () => $this->project?->nilai_kontrak ?? $this->nilai_bulan ?? 0);
+    }
 
-	protected function costCenter(): Attribute
-	{
-		return Attribute::get(fn () => $this->project?->cost_center);
-	}
+    protected function pm(): Attribute
+    {
+        return Attribute::get(fn () => $this->project?->pm?->employ_name);
+    }
 
-	protected function contractReference(): Attribute
-	{
-		return Attribute::get(fn () => $this->project?->no_kontrak);
-	}
+    protected function userName(): Attribute
+    {
+        return Attribute::get(fn () => $this->project?->user);
+    }
 
-	protected function procurementPeriod(): Attribute
-	{
-		return Attribute::get(fn () => $this->priode ?: '-');
-	}
+    protected function procurementType(): Attribute
+    {
+        return Attribute::get(fn () => $this->tipe_pengadaan ?: '-');
+    }
 
-	protected function contractDate(): Attribute
-	{
-		return Attribute::get(fn () => $this->project?->tgl_kontrak);
-	}
+    protected function costCenter(): Attribute
+    {
+        return Attribute::get(fn () => $this->project?->cost_center);
+    }
 
-	protected function dueDate(): Attribute
-	{
-		return Attribute::get(fn () => $this->due_date_kontrak);
-	}
+    protected function contractReference(): Attribute
+    {
+        return Attribute::get(fn () => $this->project?->no_kontrak);
+    }
 
-	protected function occurredOn(): Attribute
-	{
-		return Attribute::get(fn () => $this->tgl_pembuatan_ba ?? now());
-	}
+    protected function procurementPeriod(): Attribute
+    {
+        return Attribute::get(fn () => $this->priode ?: '-');
+    }
+
+    protected function contractDate(): Attribute
+    {
+        return Attribute::get(fn () => $this->project?->tgl_kontrak);
+    }
+
+    protected function dueDate(): Attribute
+    {
+        return Attribute::get(fn () => $this->due_date_kontrak);
+    }
+
+    protected function occurredOn(): Attribute
+    {
+        return Attribute::get(fn () => $this->tgl_pembuatan_ba ?? now());
+    }
 }
