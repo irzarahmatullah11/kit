@@ -308,8 +308,15 @@ class ChargeController extends Controller
             'pmOptions' => $pmOptions,
             'monthlyTotal' => $monthly->sum('nilai_bulan'),
             'monthlyCount' => $monthly->count(),
-            'oneTimeTotal' => $oneTime->sum('nilai_bulan'),
+            
+            // --- PERBAIKAN LOGIKA ONE-TIME CHARGE ---
+            // Lakukan JOIN ke tabel project agar bisa melakukan SUM pada kolom nilai_kontrak
+            'oneTimeTotal' => ProjectBilling::join('project', 'project_billing.project_id', '=', 'project.project_id')
+                                ->where('project_billing.kategori_layanan', 'OTM')
+                                ->sum('project.nilai_kontrak'),
             'oneTimeCount' => $oneTime->count(),
+            // ----------------------------------------
+
             'dashboardTotals' => [
                 'projectTotal' => Project::count(),
                 'contractValueTotal' => Project::sum('nilai_kontrak'),
