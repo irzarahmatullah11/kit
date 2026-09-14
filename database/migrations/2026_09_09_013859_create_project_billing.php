@@ -19,8 +19,9 @@ return new class extends Migration
             $table->string('priode');
             $table->decimal('nilai_bulan', 15, 2)->nullable();
             $table->date('due_date_kontrak')->nullable();
-            $table->date('tgl_pembuatan_ba')->nullable();
             $table->date('tgl_paraf_pm')->nullable();
+            $table->date('tgl_ttd_manager')->nullable();
+            $table->date('tgl_pembuatan_ba')->nullable();
             $table->date('tgl_submit_dokumen')->nullable();
             $table->date('tgl_permintaan_invoice')->nullable();
             $table->string('status')->nullable();

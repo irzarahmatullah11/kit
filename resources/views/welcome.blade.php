@@ -1,35 +1,5 @@
-<!DOCTYPE html>
-<html lang="id">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Ruang Biaya | Catatan pengeluaran</title>
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body>
+<x-app-layout>
         <div class="app-shell">
-            <aside class="sidebar" id="sidebar">
-                <div class="sidebar-top">
-                    <a class="brand" href="{{ route('dashboard') }}" aria-label="Ruang Biaya">
-                        <span class="brand-mark">RB</span><span class="brand-text">Ruang Biaya</span>
-                    </a>
-                    <button class="sidebar-toggle" type="button" data-sidebar-toggle aria-label="Sembunyikan sidebar">
-                        <span class="sidebar-toggle-icon">⟨</span>
-                    </button>
-                </div>
-                <nav class="sidebar-nav" aria-label="Navigasi utama">
-                    <a class="sidebar-nav-link {{ $page === 'dashboard' ? 'is-active' : '' }}" href="{{ route('dashboard') }}"><span>◈</span><span class="nav-label">Dashboard</span></a>
-                    <a class="sidebar-nav-link {{ $page === 'one_time' ? 'is-active' : '' }}" href="{{ route('charges.one-time') }}"><span>+</span><span class="nav-label">One-time / Charge</span></a>
-                    <a class="sidebar-nav-link {{ $page === 'monthly' ? 'is-active' : '' }}" href="{{ route('charges.monthly') }}"><span>↻</span><span class="nav-label">Bulanan</span></a>
-                </nav>
-                <div class="sidebar-intro">
-                    <span class="eyebrow">PERSONAL FINANCE</span>
-                    <h2>Lebih tenang saat semua tercatat.</h2>
-                    <p>Kelola tagihan bulanan dan pengeluaran sekali bayar di satu tempat.</p>
-                </div>
-                <div class="sidebar-footer"><span class="status-dot"></span><span>Penyimpanan aktif</span></div>
-            </aside>
-
             <main class="main-content">
                 <header class="topbar">
                     <div><span class="eyebrow">{{ $page === 'dashboard' ? 'MATRIX DASHBOARD' : ($page === 'one_time' ? 'ONE-TIME / CHARGE' : 'PEMBAYARAN BULANAN') }}</span><h1>{{ $page === 'dashboard' ? 'Matrix Dashboard' : ($page === 'one_time' ? 'One-time / Charge' : 'Pembayaran bulanan') }}</h1></div>
@@ -209,5 +179,4 @@
                 @endif
             </main>
         </div>
-    </body>
-</html>
+</x-app-layout>
