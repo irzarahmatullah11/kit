@@ -23,7 +23,7 @@
                 <div class="topbar-actions">
                     <div class="date-chip">{{ now()->translatedFormat('l, d F Y') }}</div>
                     <!-- Tombol Tambah User (Disabled), menggunakan .icon-button dari app.css -->
-                    <a href="{{ route('account.create') }}">
+                    <a href="{{ route('admin.account.create') }}">
                         <button class="icon-button" type="button" aria-label="Tambah User" title="Tambah User">
                             +
                         </button>
@@ -62,9 +62,9 @@
                                     <td>{{ $employee->roleData->role_name ?? 'Tidak ada role' }}</td>
                                     <td>
                                         <div style="display: flex; gap: 12px; align-items: center;">
-                                            <a href="{{ route('account.edit', $employee->employ_id) }}" class="edit-link" style="background: none; border: none; padding: 0;">Edit</a>
+                                            <a href="{{ route('admin.account.edit', $employee->employ_id) }}" class="edit-link" style="background: none; border: none; padding: 0;">Edit</a>
 
-                                            <form action="{{ route('account.delete', $employee->employ_id) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Yakin ingin menghapus data ini?');">
+                                            <form action="{{ route('admin.account.delete', $employee->employ_id) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Yakin ingin menghapus data ini?');">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="edit-link" style="background: none; border: none; padding: 0; color: var(--coral); cursor: pointer;">Hapus</button>
