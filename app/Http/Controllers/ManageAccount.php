@@ -50,7 +50,7 @@ class ManageAccount extends Controller
 
         $user->save();
 
-        return redirect()->route('account.show')->with('success', 'Akun employee berhasil ditambahkan!');
+        return redirect()->route('admin.account.show')->with('success', 'Akun employee berhasil ditambahkan!');
     }
 
     public function editAccount($id):view{
@@ -92,7 +92,7 @@ class ManageAccount extends Controller
 
         $user->save();
 
-        return redirect()->route('account.show')->with('success', 'Data employee berhasil diperbarui!');
+        return redirect()->route('admin.account.show')->with('success', 'Data employee berhasil diperbarui!');
     }
 
     public function deleteAccount($id)
@@ -100,11 +100,11 @@ class ManageAccount extends Controller
         $user = Employ::find($id);
 
         if (!$user) {
-            return redirect()->route('account.index')->with('error', 'Data employee tidak ditemukan.');
+            return redirect()->route('admin.account.show')->with('error', 'Data employee tidak ditemukan.');
         }
 
         $user->delete();
 
-        return redirect()->route('account.show')->with('success', 'Akun employee berhasil dihapus!');
+        return redirect()->route('admin.account.show')->with('success', 'Akun employee berhasil dihapus!');
     }
 }

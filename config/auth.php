@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\User;
+use App\Models\Employ;
 
 return [
 
@@ -18,7 +18,7 @@ return [
     'providers' => [
     'users' => [
         'driver' => 'eloquent',
-        'model' => App\Models\Employ::class, // Diubah dari User::class
+        'model' => Employ::class, 
     ],
 ],
 
@@ -62,18 +62,6 @@ return [
     | Supported: "database", "eloquent"
     |
     */
-
-    'providers' => [
-        'users' => [
-            'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', User::class),
-        ],
-
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
-    ],
 
     /*
     |--------------------------------------------------------------------------
