@@ -2,7 +2,17 @@
             <main class="main-content">
                 <header class="topbar">
                     <div><span class="eyebrow">{{ $page === 'dashboard' ? 'MATRIX DASHBOARD' : ($page === 'one_time' ? 'ONE-TIME / CHARGE' : 'PEMBAYARAN BULANAN') }}</span><h1>{{ $page === 'dashboard' ? 'Matrix Dashboard' : ($page === 'one_time' ? 'One-time / Charge' : 'Pembayaran bulanan') }}</h1></div>
-                    <div class="topbar-actions"><div class="date-chip">{{ now()->translatedFormat('l, d F Y') }}</div>@if ($page !== 'dashboard')<button class="icon-button" type="button" data-open-charge-modal aria-label="Tambah pengeluaran" title="Tambah pengeluaran">+</button>@endif</div>
+                    <div class="topbar-actions">
+                        @if ($page === 'dashboard')
+                            <button class="secondary-button" type="button" data-open-export-modal aria-label="Export XLSX" title="Export XLSX">
+                                Export XLSX
+                            </button>
+                        @endif
+                        <div class="date-chip">{{ now()->translatedFormat('l, d F Y') }}</div>
+                        @if ($page !== 'dashboard')
+                            <button class="icon-button" type="button" data-open-charge-modal aria-label="Tambah pengeluaran" title="Tambah pengeluaran">+</button>
+                        @endif
+                    </div>
                 </header>
 
                 @if (session('success'))
@@ -17,6 +27,68 @@
                 </div>
 
                 @if ($page === 'dashboard')
+                    <section class="export-panel" data-export-modal aria-hidden="true">
+                        <div class="modal-backdrop" data-close-export-modal></div>
+                        <div class="modal-card export-card">
+                            <div class="section-heading">
+                                <div>
+                                    <span class="eyebrow">EXPORT XLSX</span>
+                                    <h2>Pratinjau ekspor data dashboard</h2>
+                                </div>
+                                <button class="modal-close" type="button" data-close-export-modal aria-label="Tutup popup ekspor">&times;</button>
+                            </div>
+
+                            <div class="export-preview">
+                                <div class="export-summary">
+                                    <span class="export-summary-label">Jumlah data siap diekspor</span>
+                                    <strong>{{ $dashboardTotalCount }}</strong>
+                                    <small>baris matrix</small>
+                                </div>
+
+                                <div class="export-meta">
+                                    <div class="export-meta-item">
+                                        <span class="export-meta-label">Status</span>
+                                        <strong>{{ $activeStatus ?: 'Semua status' }}</strong>
+                                    </div>
+                                    <div class="export-meta-item">
+                                        <span class="export-meta-label">Layanan</span>
+                                        <strong>{{ $activeService && $activeService !== 'all' ? strtoupper($activeService) : 'Semua layanan' }}</strong>
+                                    </div>
+                                </div>
+
+                                @if ($activeSearch || ! empty($activeFilters))
+                                    <div class="export-filter-list">
+                                        @if ($activeSearch)
+                                            <span class="export-filter-tag">Search: {{ $activeSearch }}</span>
+                                        @endif
+                                        @foreach ($activeFilters as $filterKey => $filterValue)
+                                            @php
+                                                $filterLabel = collect([
+                                                    'pm' => 'PM',
+                                                    'project' => 'Project',
+                                                    'user' => 'User',
+                                                    'type' => 'Type',
+                                                    'cost_center' => 'Cost Center',
+                                                    'contract_reference' => 'Referensi Kontrak',
+                                                    'nilai_kontrak' => 'Nilai Kontrak',
+                                                    'periode' => 'Periode',
+                                                    'contract_date' => 'Tanggal Kontrak',
+                                                    'due_date' => 'Due Date',
+                                                    'status' => 'Status',
+                                                ])->get($filterKey, ucfirst(str_replace('_', ' ', $filterKey)));
+                                            @endphp
+                                            <span class="export-filter-tag">{{ $filterLabel }}: {{ is_array($filterValue) ? implode(', ', $filterValue) : $filterValue }}</span>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="export-actions">
+                                <button class="secondary-button" type="button" data-close-export-modal>Batalkan</button>
+                                <a class="submit-button export-button" href="{{ route('dashboard.export-csv') }}">Download XLSX</a>
+                            </div>
+                        </div>
+                    </section>
                     <section class="summary-grid" aria-label="Ringkasan dashboard">
                         <article class="summary-card summary-card-primary">
                             <div class="summary-icon">Rp</div>
@@ -65,7 +137,7 @@
                         </a>
                     </section>
 
-                 
+                   
                 @else
                     <div class="content-grid">
                         <section class="form-panel charge-form-panel" aria-labelledby="form-title" data-charge-modal aria-hidden="true">

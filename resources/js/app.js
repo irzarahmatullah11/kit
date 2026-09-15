@@ -29,7 +29,27 @@ const setChargeModal = (isOpen) => {
 };
 openChargeModal?.addEventListener('click', () => setChargeModal(true));
 closeChargeModalButtons.forEach((button) => button.addEventListener('click', () => setChargeModal(false)));
-document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setChargeModal(false); });
+
+const exportModal = document.querySelector('[data-export-modal]');
+const openExportModal = document.querySelector('[data-open-export-modal]');
+const closeExportModalButtons = document.querySelectorAll('[data-close-export-modal]');
+
+const setExportModal = (isOpen) => {
+	if (!exportModal) return;
+	exportModal.classList.toggle('is-open', isOpen);
+	exportModal.setAttribute('aria-hidden', String(!isOpen));
+	document.body.classList.toggle('modal-open', isOpen);
+};
+
+openExportModal?.addEventListener('click', () => setExportModal(true));
+closeExportModalButtons.forEach((button) => button.addEventListener('click', () => setExportModal(false)));
+
+document.addEventListener('keydown', (event) => {
+	if (event.key === 'Escape') {
+		setChargeModal(false);
+		setExportModal(false);
+	}
+});
 
 const hoverPanel = document.querySelector('[data-detail-hover]');
 const hoverPanelBody = hoverPanel?.querySelector('[data-detail-hover-body]');
