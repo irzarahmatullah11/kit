@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth')->group(function () {
     Route::get('/', [ChargeController::class, 'index'])->name('home');
     Route::get('/dashboard', [ChargeController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/export-csv', [ChargeController::class, 'exportCsv'])->name('dashboard.export-csv');
     Route::get('/payments/one-time', [ChargeController::class, 'oneTime'])->name('charges.one-time');
     Route::get('/payments/monthly', [ChargeController::class, 'monthly'])->name('charges.monthly');
     Route::get('/charges/{charge}', [ChargeController::class, 'show'])->name('charges.show');
