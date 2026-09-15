@@ -8,6 +8,7 @@ use App\Models\ProjectBilling;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -301,8 +302,11 @@ class ChargeController extends Controller
             'tgl_submit_dokumen' => ['nullable', 'date'],
             'tgl_permintaan_invoice' => ['nullable', 'date'],
             'note' => ['nullable', 'string'],
+            'file_kontrak' => ['nullable', 'file', 'mimes:pdf', 'extensions:pdf', 'max:10240'],
+            'file_ba' => ['nullable', 'file', 'mimes:pdf', 'extensions:pdf', 'max:10240'],
         ]);
 
+        $documentPaths = $this->storeDocuments($request);
         $statusDates = [
             'tgl_pembuatan_ba',
             'tgl_paraf_pm',
@@ -314,7 +318,7 @@ class ChargeController extends Controller
             ? 'Done'
             : 'In Progress';
 
-        DB::transaction(function () use ($data): void {
+        DB::transaction(function () use ($data, $documentPaths): void {
             $project = Project::create([
                 'project_name' => $data['project_name'],
                 'user' => $data['user'],
@@ -338,6 +342,8 @@ class ChargeController extends Controller
                 'tgl_permintaan_invoice' => $data['tgl_permintaan_invoice'],
                 'status' => $data['status'],
                 'note' => $data['note'],
+                'file_kontrak' => $documentPaths['file_kontrak'] ?? null,
+                'file_ba' => $documentPaths['file_ba'] ?? null,
             ]);
         });
 
@@ -365,8 +371,11 @@ class ChargeController extends Controller
             'tgl_submit_dokumen' => ['nullable', 'date'],
             'tgl_permintaan_invoice' => ['nullable', 'date'],
             'note' => ['nullable', 'string'],
+            'file_kontrak' => ['nullable', 'file', 'mimes:pdf', 'extensions:pdf', 'max:10240'],
+            'file_ba' => ['nullable', 'file', 'mimes:pdf', 'extensions:pdf', 'max:10240'],
         ]);
 
+        $documentPaths = $this->storeDocuments($request);
         $statusDates = [
             'tgl_pembuatan_ba',
             'tgl_paraf_pm',
@@ -386,11 +395,45 @@ class ChargeController extends Controller
             'nilai_kontrak' => $data['nilai_kontrak'],
             'tgl_kontrak' => $data['tgl_kontrak'],
         ]);
-        $charge->update(collect($data)->except(['project_name', 'user', 'cost_center', 'no_kontrak', 'nilai_kontrak', 'tgl_kontrak'])->all());
+        $previousDocumentPaths = [
+            'file_kontrak' => $charge->file_kontrak,
+            'file_ba' => $charge->file_ba,
+        ];
+        $billingData = collect($data)
+            ->except(['project_name', 'user', 'cost_center', 'no_kontrak', 'nilai_kontrak', 'tgl_kontrak', 'file_kontrak', 'file_ba'])
+            ->all();
+
+        foreach ($documentPaths as $field => $path) {
+            $billingData[$field] = $path;
+        }
+
+        $charge->update($billingData);
+
+        foreach ($documentPaths as $field => $path) {
+            if ($previousDocumentPaths[$field] && $previousDocumentPaths[$field] !== $path) {
+                Storage::disk('public')->delete($previousDocumentPaths[$field]);
+            }
+        }
 
         $destination = $data['kategori_layanan'] === 'OTM' ? 'charges.one-time' : 'charges.monthly';
 
         return to_route($destination)->with('success', 'Pembayaran berhasil diperbarui.');
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function storeDocuments(Request $request): array
+    {
+        $paths = [];
+
+        foreach (['file_kontrak', 'file_ba'] as $field) {
+            if ($request->hasFile($field)) {
+                $paths[$field] = $request->file($field)->store('payment-documents', 'public');
+            }
+        }
+
+        return $paths;
     }
 
     private function page(string $page, $query, ?string $status = null, ?string $service = null, ?string $search = null, array $filters = []): View
