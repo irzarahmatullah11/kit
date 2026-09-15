@@ -9,6 +9,13 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Worksheet\Table;
+use PhpOffice\PhpSpreadsheet\Worksheet\Table\TableStyle;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class ChargeController extends Controller
 {
@@ -46,6 +53,225 @@ class ChargeController extends Controller
         $charge->load('project.pm');
 
         return view('charges.print', compact('charge'));
+    }
+
+    public function exportCsv(Request $request)
+    {
+        $status = $request->query('status');
+        $service = $request->query('service');
+        $search = trim((string) $request->query('search', ''));
+        $filters = $request->query('filters', []);
+
+        $rowsQuery = ProjectBilling::with('project.pm')->latest('billing_id');
+
+        if ($status) {
+            $rowsQuery->where('status', $status);
+        }
+
+        if ($service && $service !== 'all') {
+            $rowsQuery->where('kategori_layanan', $service);
+        }
+
+        if ($search !== '') {
+            $rowsQuery->where(function ($rowQuery) use ($search) {
+                $rowQuery->where('kategori_layanan', 'like', "%{$search}%")
+                    ->orWhere('tipe_pengadaan', 'like', "%{$search}%")
+                    ->orWhere('priode', 'like', "%{$search}%")
+                    ->orWhere('status', 'like', "%{$search}%")
+                    ->orWhere('note', 'like', "%{$search}%")
+                    ->orWhere('due_date_kontrak', 'like', "%{$search}%")
+                    ->orWhereHas('project', function ($projectQuery) use ($search) {
+                        $projectQuery->where('project_name', 'like', "%{$search}%")
+                            ->orWhere('user', 'like', "%{$search}%")
+                            ->orWhere('cost_center', 'like', "%{$search}%")
+                            ->orWhere('no_kontrak', 'like', "%{$search}%")
+                            ->orWhere('nilai_kontrak', 'like', "%{$search}%")
+                            ->orWhere('tgl_kontrak', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('project.pm', function ($pmQuery) use ($search) {
+                        $pmQuery->where('employ_name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $normalizedFilters = [];
+        foreach ($filters as $key => $value) {
+            if (is_array($value)) {
+                $selectedValues = array_values(array_filter(array_map(fn ($item) => is_string($item) ? trim($item) : $item, $value), fn ($item) => $item !== '' && $item !== null));
+
+                if (! empty($selectedValues)) {
+                    $normalizedFilters[$key] = $selectedValues;
+                }
+
+                continue;
+            }
+
+            $trimmedValue = is_string($value) ? trim($value) : $value;
+
+            if ($trimmedValue !== '' && $trimmedValue !== null) {
+                $normalizedFilters[$key] = $trimmedValue;
+            }
+        }
+
+        if (! empty($normalizedFilters)) {
+            foreach ($normalizedFilters as $filterKey => $filterValue) {
+                $values = is_array($filterValue) ? $filterValue : [$filterValue];
+
+                switch ($filterKey) {
+                    case 'pm':
+                        $rowsQuery->whereHas('project.pm', fn ($q) => $q->whereIn('employ_name', $values));
+                        break;
+                    case 'project':
+                        $rowsQuery->whereHas('project', fn ($q) => $q->whereIn('project_name', $values));
+                        break;
+                    case 'user':
+                        $rowsQuery->whereHas('project', fn ($q) => $q->whereIn('user', $values));
+                        break;
+                    case 'type':
+                        $rowsQuery->whereIn('kategori_layanan', $values);
+                        break;
+                    case 'cost_center':
+                        $rowsQuery->whereHas('project', fn ($q) => $q->whereIn('cost_center', $values));
+                        break;
+                    case 'contract_reference':
+                        $rowsQuery->whereHas('project', fn ($q) => $q->whereIn('no_kontrak', $values));
+                        break;
+                    case 'nilai_kontrak':
+                        $rowsQuery->whereHas('project', fn ($q) => $q->whereIn('nilai_kontrak', $values));
+                        break;
+                    case 'periode':
+                        $rowsQuery->whereIn('priode', $values);
+                        break;
+                    case 'contract_date':
+                        $rowsQuery->whereHas('project', fn ($q) => $q->whereIn('tgl_kontrak', $values));
+                        break;
+                    case 'due_date':
+                        $rowsQuery->whereIn('due_date_kontrak', $values);
+                        break;
+                    case 'status':
+                        $rowsQuery->whereIn('status', $values);
+                        break;
+                }
+            }
+        }
+
+        $rows = $rowsQuery->get();
+
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Matrix Dashboard');
+
+        $headers = ['No', 'PM', 'Project', 'USER', 'Type Pengadaan', 'Cost Center', 'Kontrak / PO / JO', 'Nilai Kontrak', 'Periode Pengadaan', 'Tanggal Kontrak / PO / JO', 'Masa Kontrak Due Date', 'Tgl Pembuatan BA', 'Tgl Paraf PM', 'Tgl TTD Manager', 'Tgl Submit Dokumen', 'Tgl Permintaan Invoice', 'Status', 'Catatan'];
+        $sheetData = [$headers];
+
+        $rowNumber = 1;
+        foreach ($rows as $row) {
+            $sheetData[] = [
+                $rowNumber,
+                $row->pm ?? '-',
+                $row->name ?? '-',
+                $row->user_name ?? '-',
+                $row->procurement_type ?? '-',
+                $row->cost_center ?? '-',
+                $row->contract_reference ?? '-',
+                (float) ($row->amount ?? 0),
+                $row->procurement_period ?? '-',
+                $row->contract_date?->format('Y-m-d') ?? '-',
+                $row->due_date?->format('Y-m-d') ?? '-',
+                $row->tgl_pembuatan_ba?->format('Y-m-d') ?? '-',
+                $row->tgl_paraf_pm?->format('Y-m-d') ?? '-',
+                $row->tgl_ttd_manager?->format('Y-m-d') ?? '-',
+                $row->tgl_submit_dokumen?->format('Y-m-d') ?? '-',
+                $row->tgl_permintaan_invoice?->format('Y-m-d') ?? '-',
+                $row->status ?? '-',
+                $row->note ?? '-',
+            ];
+
+            $rowNumber++;
+        }
+
+        $sheet->fromArray($sheetData, null, 'A1');
+
+        $lastRow = count($sheetData) + 1;
+
+        $headerStyle = [
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'],
+                'name' => 'Calibri',
+                'size' => 11,
+            ],
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '1F4E78'],
+            ],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['rgb' => 'D9E2F3'],
+                ],
+            ],
+        ];
+
+        $sheet->getStyle('A1:R1')->applyFromArray($headerStyle);
+        $sheet->getStyle('A1:R'.$lastRow)->getAlignment()->setWrapText(true);
+
+        $bodyStyle = [
+            'font' => [
+                'name' => 'Calibri',
+                'size' => 10,
+            ],
+            'alignment' => [
+                'vertical' => Alignment::VERTICAL_CENTER,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['rgb' => 'D9E2F3'],
+                ],
+            ],
+        ];
+
+        $sheet->getStyle('A2:R'.$lastRow)->applyFromArray($bodyStyle);
+
+        for ($rowIndex = 2; $rowIndex <= $lastRow; $rowIndex++) {
+            $sheet->getStyle('A'.$rowIndex.':L'.$rowIndex)->applyFromArray([
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => $rowIndex % 2 === 0 ? 'F7F9FC' : 'FFFFFF'],
+                ],
+            ]);
+        }
+
+        $sheet->getStyle('G2:G'.$lastRow)->getNumberFormat()->setFormatCode('#,##0');
+
+        foreach (range('A', 'R') as $column) {
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+        }
+
+        $tableRange = 'A1:R'.$lastRow;
+        $table = new Table($tableRange, 'MatrixDashboardTable');
+        $table->setStyle(new TableStyle(TableStyle::TABLE_STYLE_MEDIUM2));
+        $sheet->addTable($table);
+
+        $filename = 'matrix-dashboard-'.now()->format('Ymd_His').'.xlsx';
+
+        $writer = new Xlsx($spreadsheet);
+        $tempFile = tempnam(sys_get_temp_dir(), 'xlsx_');
+
+        if ($tempFile === false) {
+            abort(500, 'Gagal membuat file spreadsheet sementara.');
+        }
+
+        $writer->save($tempFile);
+
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
     }
 
     public function edit(ProjectBilling $charge): View
@@ -308,12 +534,12 @@ class ChargeController extends Controller
             'pmOptions' => $pmOptions,
             'monthlyTotal' => $monthly->sum('nilai_bulan'),
             'monthlyCount' => $monthly->count(),
-            
+
             // --- PERBAIKAN LOGIKA ONE-TIME CHARGE ---
             // Lakukan JOIN ke tabel project agar bisa melakukan SUM pada kolom nilai_kontrak
             'oneTimeTotal' => ProjectBilling::join('project', 'project_billing.project_id', '=', 'project.project_id')
-                                ->where('project_billing.kategori_layanan', 'OTM')
-                                ->sum('project.nilai_kontrak'),
+                ->where('project_billing.kategori_layanan', 'OTM')
+                ->sum('project.nilai_kontrak'),
             'oneTimeCount' => $oneTime->count(),
             // ----------------------------------------
 
