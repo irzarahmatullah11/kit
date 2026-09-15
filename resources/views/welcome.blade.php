@@ -142,7 +142,7 @@
                     <div class="content-grid">
                         <section class="form-panel charge-form-panel" aria-labelledby="form-title" data-charge-modal aria-hidden="true">
                             <div class="modal-backdrop" data-close-charge-modal></div><div class="modal-card"><div class="section-heading"><div><span class="eyebrow">CATAT BIAYA</span><h2 id="form-title">Tambah pengeluaran</h2></div><button class="modal-close" type="button" data-close-charge-modal aria-label="Tutup form">&times;</button></div>
-                            <form method="POST" action="{{ route('charges.store') }}" class="charge-form">
+                            <form method="POST" action="{{ route('charges.store') }}" class="charge-form" enctype="multipart/form-data">
                                 @csrf
                                 <div class="form-row">
                                     <div class="field-group"><label for="project_name">Project <span>*</span></label><input id="project_name" name="project_name" value="{{ old('project_name') }}" maxlength="120" required></div>
@@ -177,6 +177,10 @@
                                     <div class="field-group"><label for="tgl_permintaan_invoice">Tanggal permintaan invoice</label><input id="tgl_permintaan_invoice" name="tgl_permintaan_invoice" type="date" value="{{ old('tgl_permintaan_invoice') }}"></div>
                                 </div>
                                 <div class="field-group"><label for="note">Note / Catatan</label><textarea id="note" name="note" rows="3" maxlength="500">{{ old('note') }}</textarea></div>
+                                <div class="form-row">
+                                    <div class="field-group"><label for="file_kontrak">File kontrak (PDF)</label><input id="file_kontrak" name="file_kontrak" type="file" accept="application/pdf,.pdf"><x-input-error :messages="$errors->get('file_kontrak')" /></div>
+                                    <div class="field-group"><label for="file_ba">File BA (PDF)</label><input id="file_ba" name="file_ba" type="file" accept="application/pdf,.pdf"><x-input-error :messages="$errors->get('file_ba')" /></div>
+                                </div>
                                 <button class="submit-button" type="submit"><span>Simpan biaya</span><span aria-hidden="true">&#8594;</span></button>
                             </form></div>
                         </section>

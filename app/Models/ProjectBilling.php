@@ -13,7 +13,7 @@ class ProjectBilling extends Model
 
     public $timestamps = false;
 
-    protected $fillable = ['project_id', 'kategori_layanan', 'tipe_pengadaan', 'priode', 'due_date_kontrak', 'tgl_pembuatan_ba', 'tgl_paraf_pm', 'tgl_ttd_manager', 'tgl_submit_dokumen', 'tgl_permintaan_invoice', 'status', 'note'];
+    protected $fillable = ['project_id', 'kategori_layanan', 'tipe_pengadaan', 'priode', 'due_date_kontrak', 'tgl_pembuatan_ba', 'tgl_paraf_pm', 'tgl_ttd_manager', 'tgl_submit_dokumen', 'tgl_permintaan_invoice', 'status', 'note', 'file_kontrak', 'file_ba'];
 
     protected $casts = [
         'nilai_bulan' => 'decimal:2',

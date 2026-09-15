@@ -19,7 +19,7 @@
         <main class="main-content edit-page">
             <header class="topbar"><div><span class="eyebrow">EDIT PEMBAYARAN</span><h1>{{ $charge->project?->project_name }}</h1></div><a class="back-link" href="{{ route('dashboard') }}">Kembali</a></header>
             <section class="form-panel edit-panel">
-                <form method="POST" action="{{ route('charges.update', $charge) }}" class="charge-form">
+                <form method="POST" action="{{ route('charges.update', $charge) }}" class="charge-form" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
                     <div class="form-row"><div class="field-group"><label>Project</label><input name="project_name" value="{{ old('project_name', $charge->project?->project_name) }}" required></div><div class="field-group"><label>USER</label><input name="user" value="{{ old('user', $charge->project?->user) }}" required></div></div>
@@ -32,6 +32,24 @@
                     <div class="field-group"><label>Tanggal submit dokumen</label><input type="date" name="tgl_submit_dokumen" value="{{ old('tgl_submit_dokumen', $charge->tgl_submit_dokumen?->format('Y-m-d')) }}"></div>
                     <div class="field-group"><label>Tanggal permintaan invoice</label><input type="date" name="tgl_permintaan_invoice" value="{{ old('tgl_permintaan_invoice', $charge->tgl_permintaan_invoice?->format('Y-m-d')) }}"></div>
                     <div class="field-group"><label>Note</label><textarea name="note" rows="3">{{ old('note', $charge->note) }}</textarea></div>
+                    <div class="form-row">
+                        <div class="field-group">
+                            <label for="file_kontrak">File kontrak (PDF)</label>
+                            <input id="file_kontrak" name="file_kontrak" type="file" accept="application/pdf,.pdf">
+                            <x-input-error :messages="$errors->get('file_kontrak')" />
+                            @if ($charge->file_kontrak)
+                                <a href="{{ asset('storage/' . $charge->file_kontrak) }}" target="_blank" rel="noopener">Lihat file kontrak saat ini</a>
+                            @endif
+                        </div>
+                        <div class="field-group">
+                            <label for="file_ba">File BA (PDF)</label>
+                            <input id="file_ba" name="file_ba" type="file" accept="application/pdf,.pdf">
+                            <x-input-error :messages="$errors->get('file_ba')" />
+                            @if ($charge->file_ba)
+                                <a href="{{ asset('storage/' . $charge->file_ba) }}" target="_blank" rel="noopener">Lihat file BA saat ini</a>
+                            @endif
+                        </div>
+                    </div>
                     <div class="edit-actions"><a class="cancel-link" href="{{ route('dashboard') }}">Batal</a><button class="submit-button" type="submit">Simpan perubahan</button></div>
                 </form>
             </section>
