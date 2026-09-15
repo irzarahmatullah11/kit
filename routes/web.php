@@ -14,8 +14,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/charges/{charge}/print', [ChargeController::class, 'print'])->name('charges.print');
     Route::get('/charges/{charge}/edit', [ChargeController::class, 'edit'])->name('charges.edit');
     Route::put('/charges/{charge}', [ChargeController::class, 'update'])->name('charges.update');
-    Route::post('/charges', [ChargeController::class, 'store'])->name('charges.store');
+    Route::post('/charges', [ChargeController::class, 'store'])->name('charges.store');   
+});
 
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function(){
     Route::get('/account', [ManageAccount::class, 'showAccounts'])->name('account.show');
     Route::get('/account/create', [ManageAccount::class, 'createAccount'])->name('account.create');
     Route::post('/account/create', [ManageAccount::class, 'storeAccount'])->name('account.store');
@@ -23,5 +25,6 @@ Route::middleware('auth')->group(function () {
     Route::put('/account/edit/{id}', [ManageAccount::class, 'editpush'])->name('account.edit.push');
     Route::delete('/account/delete/{id}', [ManageAccount::class, 'deleteAccount'])->name('account.delete');
 });
+
 
 require __DIR__.'/auth.php';

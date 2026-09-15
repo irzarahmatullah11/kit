@@ -16,7 +16,7 @@
                 </div>
 
                 <!-- Sesuaikan action dengan route store Anda (contoh: route('account.store')) -->
-                <form method="POST" action="{{route('account.store') }}" class="charge-form">
+                <form method="POST" action="{{route('admin.account.store') }}" class="charge-form">
                     @csrf
 
                     <!-- Input Nama -->

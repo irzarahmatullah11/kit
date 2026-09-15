@@ -22,4 +22,9 @@ class Employ extends Authenticatable
     {
         return $this->belongsTo(Role::class, 'role', 'role_id');
     }
+
+    public function isManager(): bool
+    {
+        return $this->roleData?->role_name === 'manager';
+    }
 }
