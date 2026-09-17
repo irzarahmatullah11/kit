@@ -112,7 +112,6 @@
                             <span class="summary-caption">{{ $oneTimeCount }} transaksi</span>
                         </article>
                     </section>
-
                     <section class="summary-grid" aria-label="Status dashboard">
                         <div class="summary-card status-filter-card {{ $activeStatus === 'Done' ? 'is-active' : '' }}" aria-disabled="true">
                             <div class="summary-icon summary-icon-gold">✓</div>
@@ -136,7 +135,111 @@
                             <span class="summary-caption">{{ $activeStatus ? 'filter aktif: ' . $activeStatus : 'semua baris matrix' }}</span>
                         </a>
                     </section>
+ <!-- TAMBAHKAN KODE GRAFIK DI SINI -->
+                    @if ($page === 'dashboard')
+                        <div class="card shadow-sm mt-5 mb-5 border-0 rounded-4" style="background: #ffffff; padding: 20px; border-radius: 12px;">
+                            <div class="card-body p-2">
+                                <h5 class="card-title fw-bold mb-4" style="color: #2C5E5E; font-size: 1.1rem;">Trend Nilai Kontrak Proyek</h5>
+                                <canvas id="nilaiKontrakChart" height="90"></canvas>
+                            </div>
+                        </div>
 
+                        <!-- Import Chart.js CDN -->
+                        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+                        <script>
+                            // Menerima data dari Controller ChargeController
+                            const chartLabels = @json($chartLabels ?? []);
+                            const chartData = @json($chartData ?? []);
+
+                            const ctxElement = document.getElementById('nilaiKontrakChart');
+                            if (ctxElement) {
+                                const ctx = ctxElement.getContext('2d');
+                                new Chart(ctx, {
+                                    type: 'bar',
+                                    data: {
+                                        labels: chartLabels,
+                                        datasets: [{
+                                            label: 'Nilai Kontrak',
+                                            data: chartData,
+                                            backgroundColor: '#2C5E5E',
+                                            borderRadius: 6,
+                                            barThickness: 35
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        scales: {
+                                            y: {
+                                                beginAtZero: true,
+                                                ticks: {
+                                                    callback: function(value) {
+                                                        return 'Rp ' + new Intl.NumberFormat('id-ID').format(value);
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        plugins: {
+                                            tooltip: {
+                                                callbacks: {
+                                                    label: function(context) {
+                                                        let label = context.dataset.label || '';
+                                                        if (label) { label += ': '; }
+                                                        if (context.parsed.y !== null) {
+                                                            label += 'Rp ' + new Intl.NumberFormat('id-ID').format(context.parsed.y);
+                                                        }
+                                                        return label;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+                        </script>
+                        <!-- KONTAINER GRAFIK KEDUA (DONUT CHART STATUS PROYEK) -->
+<div class="card shadow-sm mt-4 mb-5 border-0 rounded-4" style="background: #ffffff; padding: 20px; border-radius: 12px;">
+    <div class="card-body p-2">
+        <h5 class="card-title fw-bold mb-4" style="color: #2C5E5E; font-size: 1.1rem;">Komposisi Status Proyek</h5>
+        <div style="max-width: 400px; margin: 0 auto;">
+            <canvas id="statusDonutChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Menerima data status dari Controller
+    const statusLabels = @json($statusLabels ?? []);
+    const statusData = @json($statusData ?? []);
+
+    const statusCtxElement = document.getElementById('statusDonutChart');
+    if (statusCtxElement) {
+        const statusCtx = statusCtxElement.getContext('2d');
+        new Chart(statusCtx, {
+            type: 'doughnut', // Jenis grafik donat
+            data: {
+                labels: statusLabels,
+                datasets: [{
+                    data: statusData,
+                    backgroundColor: ['#27AE60', '#F39C12'], // Hijau untuk Done, Kuning untuk In Progress
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    }
+</script>
+                    @endif
+                    <!-- BATAS TAMBAHAN GRAFIK -->
+                     
                    
                 @else
                     <div class="content-grid">
@@ -209,6 +312,7 @@
                             @if ($charges->hasPages())<div class="pagination">{{ $charges->links() }}</div>@endif
                         </section>
                     </div>
+                    
                 @endif
             </main>
 </x-app-layout>

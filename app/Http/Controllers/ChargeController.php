@@ -436,7 +436,7 @@ class ChargeController extends Controller
         return $paths;
     }
 
-    private function page(string $page, $query, ?string $status = null, ?string $service = null, ?string $search = null, array $filters = []): View
+   private function page(string $page, $query, ?string $status = null, ?string $service = null, ?string $search = null, array $filters = []): View
     {
         $chargesQuery = $query->with('project.pm')->latest('billing_id');
 
@@ -564,6 +564,24 @@ class ChargeController extends Controller
             ->orderBy('employ_name')
             ->get(['employ_id', 'employ_name']);
 
+        // --- DATA GRAFIK 1: NILAI KONTRAK ---
+        $chartProjects = Project::select('project_name', 'nilai_kontrak')
+            ->orderBy('tgl_kontrak', 'asc')
+            ->take(7)
+            ->get();
+
+        $chartLabels = $chartProjects->pluck('project_name');
+        $chartData = $chartProjects->pluck('nilai_kontrak');
+
+        // --- DATA GRAFIK 2: STATUS PROYEK ---
+        $statusCounts = ProjectBilling::select('status', DB::raw('count(*) as total'))
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        $statusLabels = $statusCounts->keys();
+        $statusData = $statusCounts->values();
+
+        // --- RETURN VIEW UTAMA (HANYA SATU) ---
         return view('welcome', [
             'charges' => $charges,
             'dashboardRows' => $dashboardRows,
@@ -578,13 +596,10 @@ class ChargeController extends Controller
             'monthlyTotal' => $monthly->sum('nilai_bulan'),
             'monthlyCount' => $monthly->count(),
 
-            // --- PERBAIKAN LOGIKA ONE-TIME CHARGE ---
-            // Lakukan JOIN ke tabel project agar bisa melakukan SUM pada kolom nilai_kontrak
             'oneTimeTotal' => ProjectBilling::join('project', 'project_billing.project_id', '=', 'project.project_id')
                 ->where('project_billing.kategori_layanan', 'OTM')
                 ->sum('project.nilai_kontrak'),
             'oneTimeCount' => $oneTime->count(),
-            // ----------------------------------------
 
             'dashboardTotals' => [
                 'projectTotal' => Project::count(),
@@ -592,6 +607,11 @@ class ChargeController extends Controller
                 'doneCount' => ProjectBilling::where('status', 'Done')->count(),
                 'progressCount' => ProjectBilling::where('status', 'In Progress')->count(),
             ],
+
+            'chartLabels' => $chartLabels,
+            'chartData' => $chartData,
+            'statusLabels' => $statusLabels,
+            'statusData' => $statusData,
         ]);
     }
 }
