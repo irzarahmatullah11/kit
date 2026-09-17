@@ -35,12 +35,17 @@
                     <h2>Lebih tenang saat semua tercatat.</h2>
                     <p>Kelola tagihan bulanan dan pengeluaran sekali bayar di satu tempat.</p>
                 </div>
-                <div class="sidebar-intro">
+                <div class="flex user">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white-700 profile" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                     <h3>{{ auth()->user()?->employ_name ?? auth()->user()?->name }}</h3>
-                    <form method="POST" action="{{ route('logout') }}">
+                    <form method="POST" action="{{ route('logout') }}" class="flex user">
                         @csrf
-                        <button type="submit" style="cursor: pointer; padding: 8px 16px; background-color: #ef4444; color: white; border: none; border-radius: 4px;">
-                            Log Out
+                        <button type="submit">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="w-6 h-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
                         </button>
                     </form>
                 </div>

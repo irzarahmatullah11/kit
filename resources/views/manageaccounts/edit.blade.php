@@ -16,10 +16,9 @@
                     </div>
                 </div>
 
-                <!-- Pastikan route 'account.update' sudah Anda buat di web.php -->
                 <form method="POST" action="{{route('admin.account.edit.push', $user->employ_id) }}" class="charge-form">
                     @csrf
-                    @method('PUT') <!-- Method overriding untuk proses Update -->
+                    @method('PUT')
 
                     <!-- Input Nama -->
                     <div class="field-group">
