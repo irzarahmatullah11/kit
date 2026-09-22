@@ -344,6 +344,23 @@
                             <div class="modal-backdrop" data-close-charge-modal></div><div class="modal-card"><div class="section-heading"><div><span class="eyebrow">CATAT BIAYA</span><h2 id="form-title">Tambah pengeluaran</h2></div><button class="modal-close" type="button" data-close-charge-modal aria-label="Tutup form">&times;</button></div>
                             <form method="POST" action="{{ route('charges.store') }}" class="charge-form" enctype="multipart/form-data">
                                 @csrf
+                                <div class="field-group service-category-field">
+                                    <label for="kategori_layanan">Kategori layanan <span>*</span></label>
+                                    <select id="kategori_layanan" name="kategori_layanan" required data-service-category>
+                                        <option value="MS" @selected(old('kategori_layanan', $page === 'one_time' ? 'OTM' : 'MS') === 'MS')>Managed Service (MS)</option>
+                                        <option value="OTM" @selected(old('kategori_layanan', $page === 'one_time' ? 'OTM' : 'MS') === 'OTM')>One-Time Charge (OTM)</option>
+                                    </select>
+                                </div>
+                                <div class="service-fields service-fields-ms" data-service-fields="MS">
+                                    <div class="form-row">
+                                        <div class="field-group"><label for="ms_no">MS No / Nomor MS <span>*</span></label><input id="ms_no" name="ms_no" value="{{ old('ms_no') }}" maxlength="80" data-required-ms></div>
+                                        <div class="field-group"><label for="pmo_id">PMO <span>*</span></label><select id="pmo_id" name="pmo_id" data-required-ms><option value="">Pilih PMO</option>@foreach ($pmoOptions as $pmo)<option value="{{ $pmo->employ_id }}" @selected(old('pmo_id') == $pmo->employ_id)>{{ $pmo->employ_name }}</option>@endforeach</select></div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="field-group"><label for="nilai_bulan">Nilai Bulanan / BA <span>*</span></label><input id="nilai_bulan" name="nilai_bulan" type="number" min="0" value="{{ old('nilai_bulan') }}" data-required-ms></div>
+                                        <div class="field-group"><label for="priode_ms">Periode Tagihan (Bulan) <span>*</span></label><input id="priode_ms" name="priode" value="{{ old('priode') }}" maxlength="30" data-required-ms></div>
+                                    </div>
+                                </div>
                                 <div class="form-row">
                                     <div class="field-group"><label for="project_name">Project <span>*</span></label><input id="project_name" name="project_name" value="{{ old('project_name') }}" maxlength="120" required></div>
                                     <div class="field-group"><label for="user">USER <span>*</span></label><input id="user" name="user" value="{{ old('user') }}" maxlength="120" required></div>
@@ -358,16 +375,13 @@
                                 </div>
                                 <div class="form-row">
                                     <div class="field-group"><label for="tgl_kontrak">Tanggal kontrak <span>*</span></label><input id="tgl_kontrak" name="tgl_kontrak" type="date" value="{{ old('tgl_kontrak') }}" required></div>
-                                    <div class="field-group"><label for="kategori_layanan">Kategori layanan <span>*</span></label><select id="kategori_layanan" name="kategori_layanan" required><option value="MS" @selected(old('kategori_layanan', $page === 'one_time' ? 'OTM' : 'MS') === 'MS')>MS</option><option value="OTM" @selected(old('kategori_layanan', $page === 'one_time' ? 'OTM' : 'MS') === 'OTM')>OTM</option></select></div>
+                                    <div class="field-group service-fields service-fields-otm" data-service-fields="OTM"><label for="tipe_pengadaan">Type Pengadaan <span>*</span></label><input id="tipe_pengadaan" name="tipe_pengadaan" value="{{ old('tipe_pengadaan') }}" maxlength="80" data-required-otm></div>
                                 </div>
                                 <div class="form-row">
-                                    <div class="field-group"><label for="tipe_pengadaan">Type pengadaan</label><input id="tipe_pengadaan" name="tipe_pengadaan" value="{{ old('tipe_pengadaan') }}" maxlength="80"></div>
-                                    <div class="field-group"><label for="priode">Periode pengadaan (bulan) <span>*</span></label><input id="priode" name="priode" value="{{ old('priode') }}" maxlength="30" required></div>
+                                    <div class="field-group service-fields service-fields-otm" data-service-fields="OTM"><label for="priode_otm">Periode Pengadaan <span>*</span></label><input id="priode_otm" name="priode" value="{{ old('priode') }}" maxlength="30" data-required-otm></div>
+                                    <div class="field-group service-fields service-fields-otm" data-service-fields="OTM"><label for="due_date_kontrak">Masa Kontrak Due Date <span>*</span></label><input id="due_date_kontrak" name="due_date_kontrak" type="date" value="{{ old('due_date_kontrak') }}" data-required-otm></div>
                                 </div>
-                                <div class="form-row">
-                                    <div class="field-group"><label for="due_date_kontrak">Due Date</label><input id="due_date_kontrak" name="due_date_kontrak" type="date" value="{{ old('due_date_kontrak') }}"></div>
-                                    <div class="field-group"><label for="tgl_pembuatan_ba">Tanggal pembuatan BA</label><input id="tgl_pembuatan_ba" name="tgl_pembuatan_ba" type="date" value="{{ old('tgl_pembuatan_ba') }}"></div>
-                                </div>
+                                <div class="field-group"><label for="tgl_pembuatan_ba">Pembuatan BA, LHP</label><input id="tgl_pembuatan_ba" name="tgl_pembuatan_ba" type="date" value="{{ old('tgl_pembuatan_ba') }}"></div>
                                 <div class="form-row">
                                     <div class="field-group"><label for="tgl_paraf_pm">Tanggal paraf PM</label><input id="tgl_paraf_pm" name="tgl_paraf_pm" type="date" value="{{ old('tgl_paraf_pm') }}"></div>
                                     <div class="field-group"><label for="tgl_ttd_manager">Tanggal Tanda Tangan Manager</label><input id="tgl_ttd_manager" name="tgl_ttd_manager" type="date" value="{{ old('tgl_ttd_manager') }}"></div>
@@ -376,7 +390,7 @@
                                     <div class="field-group"><label for="tgl_submit_dokumen">Tanggal submit dokumen</label><input id="tgl_submit_dokumen" name="tgl_submit_dokumen" type="date" value="{{ old('tgl_submit_dokumen') }}"></div>
                                     <div class="field-group"><label for="tgl_permintaan_invoice">Tanggal permintaan invoice</label><input id="tgl_permintaan_invoice" name="tgl_permintaan_invoice" type="date" value="{{ old('tgl_permintaan_invoice') }}"></div>
                                 </div>
-                                <div class="field-group"><label for="note">Note / Catatan</label><textarea id="note" name="note" rows="3" maxlength="500">{{ old('note') }}</textarea></div>
+                                <div class="field-group"><label for="note_1">Note 1 (Catatan / Informasi)</label><textarea id="note_1" name="note_1" rows="3" maxlength="1000">{{ old('note_1', old('note')) }}</textarea></div>
                                 <div class="form-row">
                                     <div class="field-group"><label for="file_kontrak">File kontrak (PDF)</label><input id="file_kontrak" name="file_kontrak" type="file" accept="application/pdf,.pdf"><x-input-error :messages="$errors->get('file_kontrak')" /></div>
                                     <div class="field-group"><label for="file_ba">File BA (PDF)</label><input id="file_ba" name="file_ba" type="file" accept="application/pdf,.pdf"><x-input-error :messages="$errors->get('file_ba')" /></div>

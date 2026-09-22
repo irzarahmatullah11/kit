@@ -93,6 +93,9 @@ button, input, textarea { font: inherit; }
 .summary-card-primary .summary-caption { color: #bdd6d3; }
 .summary-card-note strong { margin-top: 5px; font-size: 28px; }
 .status-filter-card { cursor: pointer; }
+.service-category-field { padding: 14px; margin-bottom: 4px; border: 1px solid rgba(35,107,112,.18); border-radius: 12px; background: #f0f8f7; }
+.service-fields[hidden] { display: none; }
+.service-fields-ms, .service-fields-otm { min-width: 0; }
 .managed-service-section { margin-top: 28px; }
 .managed-service-heading { align-items: flex-end; gap: 18px; }
 .managed-service-heading h2 { max-width: 620px; }

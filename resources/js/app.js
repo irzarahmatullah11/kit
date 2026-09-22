@@ -20,6 +20,26 @@ typeInputs.forEach((input) => {
 const chargeModal = document.querySelector('[data-charge-modal]');
 const openChargeModal = document.querySelector('[data-open-charge-modal]');
 const closeChargeModalButtons = document.querySelectorAll('[data-close-charge-modal]');
+const serviceCategory = document.querySelector('[data-service-category]');
+const serviceFieldGroups = document.querySelectorAll('[data-service-fields]');
+
+const setServiceFields = (category) => {
+	serviceFieldGroups.forEach((group) => {
+		const isActive = group.dataset.serviceFields === category;
+		group.hidden = !isActive;
+
+		group.querySelectorAll('input, select, textarea').forEach((input) => {
+			input.disabled = !isActive;
+			if (input.dataset.requiredMs !== undefined || input.dataset.requiredOtm !== undefined) {
+				input.required = isActive;
+			}
+		});
+	});
+};
+
+serviceCategory?.addEventListener('change', () => setServiceFields(serviceCategory.value));
+setServiceFields(serviceCategory?.value || 'MS');
+
 const setChargeModal = (isOpen) => {
 	if (!chargeModal) return;
 	chargeModal.classList.toggle('is-open', isOpen);

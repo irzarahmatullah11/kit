@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Carbon\Carbon;
 
 class DatabaseSeeder extends Seeder
 {
@@ -13,9 +13,9 @@ class DatabaseSeeder extends Seeder
     {
         // 1. Insert Data Role[cite: 2]
         $roles = [
-            ['role_name' => 'pm'],      
-            ['role_name' => 'pmo'],     
-            ['role_name' => 'manager'], 
+            ['role_name' => 'pm'],
+            ['role_name' => 'pmo'],
+            ['role_name' => 'manager'],
         ];
         foreach ($roles as $role) {
             DB::table('role')->insert($role);
@@ -27,12 +27,12 @@ class DatabaseSeeder extends Seeder
             ['employ_name' => 'Mr A', 'email' => 'mra@example.com', 'password' => Hash::make('password123'), 'role' => 1],
             ['employ_name' => 'Mr B', 'email' => 'mrb@example.com', 'password' => Hash::make('password123'), 'role' => 1],
             ['employ_name' => 'Mr C', 'email' => 'mrc@example.com', 'password' => Hash::make('password123'), 'role' => 1],
-            
+
             // PMO (Role ID = 2)
             ['employ_name' => 'Ms A', 'email' => 'msa@example.com', 'password' => Hash::make('password123'), 'role' => 2],
             ['employ_name' => 'Ms B', 'email' => 'msb@example.com', 'password' => Hash::make('password123'), 'role' => 2],
             ['employ_name' => 'Ms C', 'email' => 'msc@example.com', 'password' => Hash::make('password123'), 'role' => 2],
-            
+
             // Manager (Role ID = 3)
             ['employ_name' => 'Manager 1', 'email' => 'manager@example.com', 'password' => Hash::make('password123'), 'role' => 3],
         ];
@@ -50,7 +50,7 @@ class DatabaseSeeder extends Seeder
             ['project_name' => 'Project YZA', 'user' => 'PT OPQ', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/009', 'nilai_kontrak' => 1750000000.00, 'tgl_kontrak' => '2026-07-01', 'pm_id' => 3, 'pmo_id' => 6, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
             ['project_name' => 'Project BCD', 'user' => 'PT RST', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/010', 'nilai_kontrak' => 3200000000.00, 'tgl_kontrak' => '2026-07-10', 'pm_id' => 1, 'pmo_id' => 4, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
             ['project_name' => 'Project EFG', 'user' => 'PT UVW', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/011', 'nilai_kontrak' => 1800500000.00, 'tgl_kontrak' => '2026-08-05', 'pm_id' => 2, 'pmo_id' => 5, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            
+
             // PROJECT DENGAN LAYANAN ONE TIME CHARGE (PMO di-set null)
             ['project_name' => 'Project HIJ', 'user' => 'PT XYZ', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/012', 'nilai_kontrak' => 2950000000.00, 'tgl_kontrak' => '2026-08-20', 'pm_id' => 3, 'pmo_id' => null, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
             ['project_name' => 'Project KLM', 'user' => 'PT LMN', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/013', 'nilai_kontrak' => 4100000000.00, 'tgl_kontrak' => '2026-09-01', 'pm_id' => 1, 'pmo_id' => null, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
@@ -92,6 +92,10 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($billings as $billing) {
+            $billing['ms_no'] = $billing['kategori_layanan'] === 'MS'
+                ? 'MS-'.str_pad((string) $billing['project_id'], 4, '0', STR_PAD_LEFT)
+                : null;
+            $billing['note_1'] = $billing['note'];
             DB::table('project_billing')->insert($billing);
         }
     }
