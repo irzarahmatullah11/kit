@@ -12,10 +12,15 @@ class Project extends Model
 
     protected $casts = ['nilai_kontrak' => 'decimal:2', 'tgl_kontrak' => 'date'];
 
-    protected $fillable = ['project_name', 'user', 'cost_center', 'no_kontrak', 'nilai_kontrak', 'tgl_kontrak', 'pm_id'];
+    protected $fillable = ['project_name', 'user', 'cost_center', 'no_kontrak', 'nilai_kontrak', 'tgl_kontrak', 'pm_id', 'pmo_id'];
 
     public function pm()
     {
         return $this->belongsTo(Employ::class, 'pm_id', 'employ_id');
+    }
+
+    public function pmo()
+    {
+        return $this->belongsTo(Employ::class, 'pmo_id', 'employ_id');
     }
 }
