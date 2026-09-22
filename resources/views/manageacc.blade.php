@@ -1,6 +1,5 @@
 <x-app-layout>
-    <div class="app-shell">
-        @if (session('success'))
+    @if (session('success'))
             <div class="alert alert-success" role="status">
                 <span class="alert-icon">&#10003;</span>
                 <span>{{ session('success') }}</span>
@@ -13,6 +12,7 @@
                 <span>{{ $errors->first() }}</span>
             </div>
         @endif
+    <div class="app-shell">
         <main class="main-content">
             <!-- Header (Topbar) -->
             <header class="topbar">

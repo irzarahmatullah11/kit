@@ -282,3 +282,15 @@ button, input, textarea { font: inherit; }
 .status-done { color: #267347; background: #e2f3e6; }
 .status-progress { color: #9a651b; background: #fff1ce; }
 .edit-link, .back-link, .cancel-link { color: var(--blue); font-size: 11px; font-weight: 700; text-decoration: none; }.edit-link:hover, .back-link:hover, .cancel-link:hover { color: var(--blue-dark); text-decoration: underline; }.edit-page { max-width: 1050px; }.edit-panel { max-width: 900px; margin: 0 auto; }.edit-actions { display: flex; align-items: center; gap: 18px; margin-top: 22px; }.edit-actions .submit-button { margin-top: 0; }
+
+.user{
+    align-items: center;
+}
+
+.user .profile{
+    padding-right: 5px;
+}
+
+.user form{
+    padding-left: 5px;
+}
