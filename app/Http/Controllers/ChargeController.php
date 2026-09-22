@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Employ;
 use App\Models\Project;
 use App\Models\ProjectBilling;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -28,7 +29,8 @@ class ChargeController extends Controller
             null,
             $request->query('service'),
             $request->query('search'),
-            $request->query('filters', [])
+            $request->query('filters', []),
+            $request->query('ms_period')
         );
     }
 
@@ -436,7 +438,7 @@ class ChargeController extends Controller
         return $paths;
     }
 
-   private function page(string $page, $query, ?string $status = null, ?string $service = null, ?string $search = null, array $filters = []): View
+    private function page(string $page, $query, ?string $status = null, ?string $service = null, ?string $search = null, array $filters = [], ?string $managedServicePeriodInput = null): View
     {
         $chargesQuery = $query->with('project.pm')->latest('billing_id');
 
@@ -564,24 +566,97 @@ class ChargeController extends Controller
             ->orderBy('employ_name')
             ->get(['employ_id', 'employ_name']);
 
-        // --- DATA GRAFIK 1: NILAI KONTRAK ---
-        $chartProjects = Project::select('project_name', 'nilai_kontrak')
-            ->orderBy('tgl_kontrak', 'asc')
-            ->take(7)
+        $trendData = DB::table('project')
+            ->selectRaw('DATE_FORMAT(tgl_kontrak, "%Y-%m") as month, SUM(nilai_kontrak) as total_biaya')
+            ->whereNotNull('tgl_kontrak')
+            ->groupByRaw('DATE_FORMAT(tgl_kontrak, "%Y-%m")')
+            ->orderBy('month')
             ->get();
 
-        $chartLabels = $chartProjects->pluck('project_name');
-        $chartData = $chartProjects->pluck('nilai_kontrak');
+        $chartLabels = $trendData->map(fn ($data) => Carbon::parse($data->month.'-01')->locale('id')->translatedFormat('F Y'))->values();
+        $chartData = $trendData->pluck('total_biaya')->map(fn ($total) => (float) $total)->values();
 
-        // --- DATA GRAFIK 2: STATUS PROYEK ---
-        $statusCounts = ProjectBilling::select('status', DB::raw('count(*) as total'))
-            ->groupBy('status')
-            ->pluck('total', 'status');
+        $managedServicePeriod = trim((string) $managedServicePeriodInput);
+        if (! preg_match('/^\d{4}-\d{2}$/', $managedServicePeriod)) {
+            $managedServicePeriod = '';
+        }
 
-        $statusLabels = $statusCounts->keys();
-        $statusData = $statusCounts->values();
+        $managedServicePeriodOptions = DB::table('project_billing as pb')
+            ->join('project as p', 'p.project_id', '=', 'pb.project_id')
+            ->where('pb.kategori_layanan', 'MS')
+            ->whereNotNull('p.tgl_kontrak')
+            ->selectRaw('DATE_FORMAT(p.tgl_kontrak, "%Y-%m") as period')
+            ->distinct()
+            ->orderByDesc('period')
+            ->pluck('period')
+            ->values();
 
-        // --- RETURN VIEW UTAMA (HANYA SATU) ---
+        $managedServiceRowsQuery = DB::table('project_billing as pb')
+            ->join('project as p', 'p.project_id', '=', 'pb.project_id')
+            ->leftJoin('employ as e', 'e.employ_id', '=', 'p.pm_id')
+            ->where('pb.kategori_layanan', 'MS')
+            ->select([
+                'pb.project_id',
+                'pb.status',
+                'pb.note',
+                'pb.tgl_pembuatan_ba',
+                'pb.tgl_paraf_pm',
+                'pb.tgl_ttd_manager',
+                'pb.tgl_submit_dokumen',
+                'pb.tgl_permintaan_invoice',
+                'p.project_name',
+                'p.tgl_kontrak',
+                'e.employ_name as pm_name',
+            ]);
+
+        if ($managedServicePeriod !== '') {
+            $managedServiceRowsQuery->whereRaw('DATE_FORMAT(p.tgl_kontrak, "%Y-%m") = ?', [$managedServicePeriod]);
+        }
+
+        $managedServiceRows = $managedServiceRowsQuery
+            ->orderBy('e.employ_name')
+            ->orderBy('p.project_name')
+            ->get();
+
+        $managedServiceStatusCounts = $managedServiceRows
+            ->groupBy('project_id')
+            ->map(fn ($projectRows) => $projectRows->contains(fn ($row) => strtolower((string) $row->status) === 'done') ? 'Done' : 'On Progress')
+            ->countBy()
+            ->sortKeys();
+
+        $managedServicePmSummary = $managedServiceRows
+            ->groupBy(fn ($row) => $row->pm_name ?: 'Belum ditentukan')
+            ->map(function ($pmRows, $pmName) {
+                $projectGroups = $pmRows->groupBy('project_id');
+                $projects = $projectGroups->map(function ($projectRows) {
+                    $row = $projectRows->first();
+                    $completedMilestones = collect([
+                        $row->tgl_pembuatan_ba,
+                        $row->tgl_paraf_pm,
+                        $row->tgl_ttd_manager,
+                        $row->tgl_submit_dokumen,
+                        $row->tgl_permintaan_invoice,
+                    ])->filter()->count();
+
+                    return [
+                        'name' => $row->project_name,
+                        'status' => strtolower((string) $row->status) === 'done' ? 'Done' : 'On Progress',
+                        'progress' => $completedMilestones * 20,
+                        'note' => trim((string) ($row->note ?? '')),
+                    ];
+                });
+
+                return [
+                    'pm' => $pmName,
+                    'total_projects' => $projects->count(),
+                    'progress_ba' => round($projects->avg('progress') ?? 0, 1),
+                    'on_progress_projects' => $projects->where('status', 'On Progress')->pluck('name')->filter()->values()->all(),
+                    'information' => $projects->pluck('note')->filter()->unique()->values()->all(),
+                ];
+            })
+            ->sortBy('pm')
+            ->values();
+
         return view('welcome', [
             'charges' => $charges,
             'dashboardRows' => $dashboardRows,
@@ -610,8 +685,10 @@ class ChargeController extends Controller
 
             'chartLabels' => $chartLabels,
             'chartData' => $chartData,
-            'statusLabels' => $statusLabels,
-            'statusData' => $statusData,
+            'managedServicePeriod' => $managedServicePeriod,
+            'managedServicePeriodOptions' => $managedServicePeriodOptions,
+            'managedServiceStatusCounts' => $managedServiceStatusCounts,
+            'managedServicePmSummary' => $managedServicePmSummary,
         ]);
     }
 }

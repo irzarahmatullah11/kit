@@ -1,7 +1,7 @@
 <x-app-layout>
             <main class="main-content">
                 <header class="topbar">
-                    <div><span class="eyebrow">{{ $page === 'dashboard' ? 'MATRIX DASHBOARD' : ($page === 'one_time' ? 'ONE-TIME / CHARGE' : 'PEMBAYARAN BULANAN') }}</span><h1>{{ $page === 'dashboard' ? 'Matrix Dashboard' : ($page === 'one_time' ? 'One-time / Charge' : 'Pembayaran bulanan') }}</h1></div>
+                    <div><span class="eyebrow">{{ $page === 'dashboard' ? 'MATRIX DASHBOARD' : ($page === 'one_time' ? 'ONE-TIME / CHARGE' : 'MANAGED SERVICE') }}</span><h1>{{ $page === 'dashboard' ? 'Matrix Dashboard' : ($page === 'one_time' ? 'One-time / Charge' : 'Managed Service') }}</h1></div>
                     <div class="topbar-actions">
                         @if ($page === 'dashboard')
                             <button class="secondary-button" type="button" data-open-export-modal aria-label="Export XLSX" title="Export XLSX">
@@ -112,16 +112,8 @@
                             <span class="summary-caption">{{ $oneTimeCount }} transaksi</span>
                         </article>
                     </section>
-                    <section class="summary-grid" aria-label="Status dashboard">
-                        <div class="summary-card status-filter-card {{ $activeStatus === 'Done' ? 'is-active' : '' }}" aria-disabled="true">
-                            <div class="summary-icon summary-icon-gold">✓</div>
-                            <div>
-                                <span class="summary-label">Status Done</span>
-                                <strong>{{ $dashboardTotals['doneCount'] ?? 0 }}</strong>
-                            </div>
-                            <span class="summary-caption">penyelesaian selesai</span>
-                        </div>
-                        <div class="summary-card status-filter-card {{ $activeStatus === 'In Progress' ? 'is-active' : '' }}" aria-disabled="true">
+                    <section class="summary-grid" aria-label="Status dashboard" style="display: flex; justify-content: center; gap: 1.5rem;">
+                        <div class="summary-card status-filter-card {{ $activeStatus === 'In Progress' ? 'is-active' : '' }}" aria-disabled="true" style="width: 100%; max-width: 400px;">
                             <div class="summary-icon">⏳</div>
                             <div>
                                 <span class="summary-label">In Progress</span>
@@ -129,118 +121,223 @@
                             </div>
                             <span class="summary-caption">masih berjalan</span>
                         </div>
-                        <a href="{{ route('dashboard') }}" class="summary-card summary-card-note status-filter-card {{ !$activeStatus ? 'is-active' : '' }}">
+                        <a href="{{ route('dashboard') }}" class="summary-card summary-card-note status-filter-card {{ !$activeStatus ? 'is-active' : '' }}" style="width: 100%; max-width: 400px;">
                             <span class="summary-label">Total catatan</span>
                             <strong>{{ $dashboardTotalCount }}</strong>
                             <span class="summary-caption">{{ $activeStatus ? 'filter aktif: ' . $activeStatus : 'semua baris matrix' }}</span>
                         </a>
                     </section>
- <!-- TAMBAHKAN KODE GRAFIK DI SINI -->
-                    @if ($page === 'dashboard')
-                        <div class="card shadow-sm mt-5 mb-5 border-0 rounded-4" style="background: #ffffff; padding: 20px; border-radius: 12px;">
-                            <div class="card-body p-2">
-                                <h5 class="card-title fw-bold mb-4" style="color: #2C5E5E; font-size: 1.1rem;">Trend Nilai Kontrak Proyek</h5>
-                                <canvas id="nilaiKontrakChart" height="90"></canvas>
+                    <section class="summary-grid" aria-labelledby="trend-chart-title" style="margin-top: 2rem; display: block;">
+                        <div class="summary-card" style="width: 100%; max-width: 100%; padding: 24px;">
+                            <h2 id="trend-chart-title" style="font-size: 1.1rem; font-weight: 600; color: #2C5E5E; margin-bottom: 20px;">Trend Realisasi Biaya per Bulan</h2>
+                            <div style="position: relative; height: 300px; width: 100%;">
+                                <canvas id="trendChart"></canvas>
                             </div>
                         </div>
+                    </section>
+                    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function () {
+                            const canvas = document.getElementById('trendChart');
+                            const labels = @json($chartLabels ?? []);
+                            const data = @json($chartData ?? []);
 
-                        <!-- Import Chart.js CDN -->
-                        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                            if (!canvas || labels.length === 0) {
+                                return;
+                            }
 
+                            new Chart(canvas, {
+                                type: 'line',
+                                data: {
+                                    labels,
+                                    datasets: [{
+                                        label: 'Total Realisasi (Rp)',
+                                        data,
+                                        borderColor: '#2C5E5E',
+                                        backgroundColor: 'rgba(44, 94, 94, 0.1)',
+                                        borderWidth: 3,
+                                        pointBackgroundColor: '#E5A93D',
+                                        pointBorderColor: '#fff',
+                                        pointBorderWidth: 2,
+                                        pointRadius: 5,
+                                        fill: true,
+                                        tension: 0.4,
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: { display: false },
+                                        tooltip: {
+                                            callbacks: {
+                                                label: function (context) {
+                                                    return 'Total Realisasi: Rp ' + new Intl.NumberFormat('id-ID').format(context.parsed.y);
+                                                }
+                                            }
+                                        }
+                                    },
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            ticks: {
+                                                callback: function (value) {
+                                                    if (value >= 1000000000) {
+                                                        return 'Rp ' + (value / 1000000000) + ' Miliar';
+                                                    }
+
+                                                    if (value >= 1000000) {
+                                                        return 'Rp ' + (value / 1000000) + ' Juta';
+                                                    }
+
+                                                    return 'Rp ' + new Intl.NumberFormat('id-ID').format(value);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        });
+                    </script>
+                    <section class="managed-service-section" aria-labelledby="managed-service-title">
+                        <div class="section-heading managed-service-heading">
+                            <div>
+                                <span class="eyebrow">MANAGED SERVICES / SEWA</span>
+                                <h2 id="managed-service-title">Informasi Progress Managed Services/Sewa</h2>
+                            </div>
+                            <form method="GET" action="{{ route('dashboard') }}" class="managed-service-filter">
+                                <label for="managed-service-period">Periode</label>
+                                <select id="managed-service-period" name="ms_period" onchange="this.form.submit()">
+                                    <option value="">Semua periode</option>
+                                    @foreach ($managedServicePeriodOptions ?? [] as $period)
+                                        <option value="{{ $period }}" @selected(($managedServicePeriod ?? '') === $period)>
+                                            {{ \Carbon\Carbon::createFromFormat('Y-m', $period)->locale('id')->translatedFormat('F Y') }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </form>
+                        </div>
+
+                        <div class="managed-service-grid">
+                            <article class="managed-service-card managed-service-chart-card">
+                                <div class="managed-service-card-heading">
+                                    <div>
+                                        <span class="eyebrow">STATUS PROJECT</span>
+                                        <h3>Komposisi Status Managed Service</h3>
+                                    </div>
+                                </div>
+                                <div class="managed-service-donut-wrap">
+                                    @if (($managedServiceStatusCounts ?? collect())->sum() > 0)
+                                        <canvas id="managedServiceStatusChart"></canvas>
+                                    @else
+                                        <div class="managed-service-empty">Belum ada data Managed Service pada periode ini.</div>
+                                    @endif
+                                </div>
+                            </article>
+
+                            <article class="managed-service-card managed-service-table-card">
+                                <div class="managed-service-card-heading">
+                                    <div>
+                                        <span class="eyebrow">RINGKASAN PM</span>
+                                        <h3>Performa Project Manager</h3>
+                                    </div>
+                                    <span class="record-count">{{ ($managedServicePmSummary ?? collect())->count() }} PM</span>
+                                </div>
+                                @if (($managedServicePmSummary ?? collect())->isNotEmpty())
+                                    <div class="managed-service-table-wrap">
+                                        <table class="managed-service-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>PM</th>
+                                                    <th>Total Project</th>
+                                                    <th>Progress BA</th>
+                                                    <th>MS On Progress</th>
+                                                    <th>Information</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach ($managedServicePmSummary as $summary)
+                                                    <tr>
+                                                        <td><strong>{{ $summary['pm'] }}</strong></td>
+                                                        <td>{{ $summary['total_projects'] }}</td>
+                                                        <td>
+                                                            <div class="managed-service-progress">
+                                                                <span>{{ number_format($summary['progress_ba'], 1, ',', '.') }}%</span>
+                                                                <span class="managed-service-progress-track"><span style="width: {{ min(100, max(0, $summary['progress_ba'])) }}%"></span></span>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            @forelse ($summary['on_progress_projects'] as $projectName)
+                                                                <span class="managed-service-project">{{ $projectName }}</span>
+                                                            @empty
+                                                                <span class="managed-service-muted">Tidak ada</span>
+                                                            @endforelse
+                                                        </td>
+                                                        <td>
+                                                            @forelse ($summary['information'] as $information)
+                                                                <span class="managed-service-note">{{ $information }}</span>
+                                                            @empty
+                                                                <span class="managed-service-muted">Belum ada catatan</span>
+                                                            @endforelse
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @else
+                                    <div class="managed-service-empty managed-service-table-empty">Belum ada data Managed Service untuk ditampilkan.</div>
+                                @endif
+                            </article>
+                        </div>
+                    </section>
+                    @if (($managedServiceStatusCounts ?? collect())->sum() > 0)
                         <script>
-                            // Menerima data dari Controller ChargeController
-                            const chartLabels = @json($chartLabels ?? []);
-                            const chartData = @json($chartData ?? []);
+                            document.addEventListener('DOMContentLoaded', function () {
+                                const canvas = document.getElementById('managedServiceStatusChart');
+                                if (!canvas || typeof Chart === 'undefined') {
+                                    return;
+                                }
 
-                            const ctxElement = document.getElementById('nilaiKontrakChart');
-                            if (ctxElement) {
-                                const ctx = ctxElement.getContext('2d');
-                                new Chart(ctx, {
-                                    type: 'bar',
+                                new Chart(canvas, {
+                                    type: 'doughnut',
                                     data: {
-                                        labels: chartLabels,
+                                        labels: ['On Progress', 'Done'],
                                         datasets: [{
-                                            label: 'Nilai Kontrak',
-                                            data: chartData,
-                                            backgroundColor: '#2C5E5E',
-                                            borderRadius: 6,
-                                            barThickness: 35
+                                            data: [
+                                                {{ $managedServiceStatusCounts->get('On Progress', 0) }},
+                                                {{ $managedServiceStatusCounts->get('Done', 0) }}
+                                            ],
+                                            backgroundColor: ['#E5A93D', '#2C5E5E'],
+                                            borderColor: '#ffffff',
+                                            borderWidth: 4,
+                                            hoverOffset: 6
                                         }]
                                     },
                                     options: {
                                         responsive: true,
-                                        scales: {
-                                            y: {
-                                                beginAtZero: true,
-                                                ticks: {
-                                                    callback: function(value) {
-                                                        return 'Rp ' + new Intl.NumberFormat('id-ID').format(value);
-                                                    }
-                                                }
-                                            }
-                                        },
+                                        maintainAspectRatio: false,
+                                        cutout: '68%',
                                         plugins: {
+                                            legend: {
+                                                position: 'bottom',
+                                                labels: { usePointStyle: true, padding: 18 }
+                                            },
                                             tooltip: {
                                                 callbacks: {
-                                                    label: function(context) {
-                                                        let label = context.dataset.label || '';
-                                                        if (label) { label += ': '; }
-                                                        if (context.parsed.y !== null) {
-                                                            label += 'Rp ' + new Intl.NumberFormat('id-ID').format(context.parsed.y);
-                                                        }
-                                                        return label;
+                                                    label: function (context) {
+                                                        const total = context.dataset.data.reduce((sum, value) => sum + value, 0);
+                                                        const percentage = total ? Math.round((context.parsed / total) * 100) : 0;
+                                                        return context.label + ': ' + context.parsed + ' project (' + percentage + '%)';
                                                     }
                                                 }
                                             }
                                         }
                                     }
                                 });
-                            }
+                            });
                         </script>
-                        <!-- KONTAINER GRAFIK KEDUA (DONUT CHART STATUS PROYEK) -->
-<div class="card shadow-sm mt-4 mb-5 border-0 rounded-4" style="background: #ffffff; padding: 20px; border-radius: 12px;">
-    <div class="card-body p-2">
-        <h5 class="card-title fw-bold mb-4" style="color: #2C5E5E; font-size: 1.1rem;">Komposisi Status Proyek</h5>
-        <div style="max-width: 400px; margin: 0 auto;">
-            <canvas id="statusDonutChart"></canvas>
-        </div>
-    </div>
-</div>
-
-<script>
-    // Menerima data status dari Controller
-    const statusLabels = @json($statusLabels ?? []);
-    const statusData = @json($statusData ?? []);
-
-    const statusCtxElement = document.getElementById('statusDonutChart');
-    if (statusCtxElement) {
-        const statusCtx = statusCtxElement.getContext('2d');
-        new Chart(statusCtx, {
-            type: 'doughnut', // Jenis grafik donat
-            data: {
-                labels: statusLabels,
-                datasets: [{
-                    data: statusData,
-                    backgroundColor: ['#27AE60', '#F39C12'], // Hijau untuk Done, Kuning untuk In Progress
-                    borderWidth: 2,
-                    borderColor: '#ffffff'
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                    }
-                }
-            }
-        });
-    }
-</script>
                     @endif
-                    <!-- BATAS TAMBAHAN GRAFIK -->
-                     
-                   
                 @else
                     <div class="content-grid">
                         <section class="form-panel charge-form-panel" aria-labelledby="form-title" data-charge-modal aria-hidden="true">
