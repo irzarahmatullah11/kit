@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedInteger('project_id');
             $table->string('kategori_layanan');
             $table->string('tipe_pengadaan')->nullable();
-            $table->string('priode');
+            $table->date('priode');
             $table->decimal('nilai_bulan', 15, 2)->nullable();
             $table->date('due_date_kontrak')->nullable();
             $table->date('tgl_paraf_pm')->nullable();

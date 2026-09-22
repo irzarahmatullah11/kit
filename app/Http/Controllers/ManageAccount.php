@@ -107,4 +107,39 @@ class ManageAccount extends Controller
 
         return redirect()->route('admin.account.show')->with('success', 'Akun employee berhasil dihapus!');
     }
+
+    public function resetpassword():View{
+        $userId = auth()->id();
+        $user = Employ::find($userId);
+        return view('manageaccounts.userResetPassword', compact('user'));
+    }
+
+    public function changepassword(Request $request ){
+
+        $request->validate([
+            'password' => 'required|string|min:6',
+            'newpassword' => 'required|string|min:6',
+        ], [
+            'password.required' => 'Password wajib diisi.',
+            'newpassword.required' => 'Konfirmasi password wajib diisi.',
+            'newpassword.min'      => 'Password minimal harus 6 karakter.'
+        ]);
+
+        $id = auth()->id();
+        $user = Employ::find($id);
+
+        if (!$user) {
+            return redirect()->route('dashboard')->with('error', 'Data user tidak ditemukan.');
+        }
+
+        if (!\Hash::check($request->password, $user->password)) {
+            return redirect()->route('dashboard')->with('error', 'Password lama salah.');
+        }
+
+        $user->password = bcrypt($request->newpassword);
+        $user->save();
+
+        return redirect()->route('dashboard')->with('success', 'password berhasil diganti!');
+
+    }
 }
