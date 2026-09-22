@@ -1,7 +1,7 @@
 <x-app-layout>
             <main class="main-content">
                 <header class="topbar">
-                    <div><span class="eyebrow">{{ $page === 'dashboard' ? 'MATRIX DASHBOARD' : ($page === 'one_time' ? 'ONE-TIME / CHARGE' : 'PEMBAYARAN BULANAN') }}</span><h1>{{ $page === 'dashboard' ? 'Matrix Dashboard' : ($page === 'one_time' ? 'One-time / Charge' : 'Pembayaran bulanan') }}</h1></div>
+                    <div><span class="eyebrow">{{ $page === 'dashboard' ? 'MATRIX DASHBOARD' : ($page === 'one_time' ? 'ONETIME CHARGE' : 'Manage Service') }}</span><h1>{{ $page === 'dashboard' ? 'Matrix Dashboard' : ($page === 'one_time' ? 'One time Charge' : 'Manage Service') }}</h1></div>
                     <div class="topbar-actions">
                         @if ($page === 'dashboard')
                             <button class="secondary-button" type="button" data-open-export-modal aria-label="Export XLSX" title="Export XLSX">
@@ -101,13 +101,13 @@
                         <article class="summary-card">
                             <div class="summary-icon summary-icon-gold">+</div>
                             <div>
-                                <span class="summary-label">Pembayaran bulanan</span>
+                                <span class="summary-label">Manage Service</span>
                                 <strong>Rp {{ number_format($monthlyTotal, 0, ',', '.') }}</strong>
                             </div>
                             <span class="summary-caption">{{ $monthlyCount }} tagihan aktif</span>
                         </article>
                         <article class="summary-card summary-card-note">
-                            <span class="summary-label">One-time / charge</span>
+                            <span class="summary-label">One time charge</span>
                             <strong>Rp {{ number_format($oneTimeTotal, 0, ',', '.') }}</strong>
                             <span class="summary-caption">{{ $oneTimeCount }} transaksi</span>
                         </article>
@@ -186,7 +186,7 @@
                         </section>
 
                         <section class="history-panel" aria-labelledby="history-title">
-                            <div class="section-heading history-heading"><div><span class="eyebrow">DAFTAR PEMBAYARAN</span><h2 id="history-title">{{ $page === 'one_time' ? 'LIST one-time / charge' : 'LIST pembayaran bulanan' }}</h2></div><span class="record-count">{{ $charges->total() }} total</span></div>
+                            <div class="section-heading history-heading"><div><span class="eyebrow">DAFTAR PEMBAYARAN</span><h2 id="history-title">{{ $page === 'one_time' ? 'LIST one time charge' : 'LIST Manage Service' }}</h2></div><span class="record-count">{{ $charges->total() }} total</span></div>
 
                             <form class="matrix-filter-form" method="GET" action="{{ $page === 'one_time' ? route('charges.one-time') : route('charges.monthly') }}">
                                 <div class="matrix-tools">

@@ -267,3 +267,7 @@ button, input, textarea { font: inherit; }
 .user form{
     padding-left: 5px;
 }
+
+.user form button{
+    cursor: pointer;
+}

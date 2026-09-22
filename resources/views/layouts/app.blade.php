@@ -24,8 +24,8 @@
                 </div>
                 <nav class="sidebar-nav" aria-label="Navigasi utama">
                     <a class="sidebar-nav-link {{ request()->routeIs('dashboard') ? 'is-active' : '' }}" href="{{ route('dashboard') }}"><span>◈</span><span class="nav-label">Dashboard</span></a>
-                    <a class="sidebar-nav-link {{ request()->routeIs('charges.one-time') ? 'is-active' : '' }}" href="{{ route('charges.one-time') }}"><span>+</span><span class="nav-label">One-time / Charge</span></a>
-                    <a class="sidebar-nav-link {{ request()->routeIs('charges.monthly') ? 'is-active' : '' }}" href="{{ route('charges.monthly') }}"><span>↻</span><span class="nav-label">Bulanan</span></a>
+                    <a class="sidebar-nav-link {{ request()->routeIs('charges.one-time') ? 'is-active' : '' }}" href="{{ route('charges.one-time') }}"><span>+</span><span class="nav-label">One time Charge</span></a>
+                    <a class="sidebar-nav-link {{ request()->routeIs('charges.monthly') ? 'is-active' : '' }}" href="{{ route('charges.monthly') }}"><span>↻</span><span class="nav-label">Manage Service</span></a>
                     @if (auth()->user()?->isManager())
                         <a class="sidebar-nav-link {{ request()->routeIs('admin.account.show') ? 'is-active' : '' }}" href="{{ route('admin.account.show') }}"><span>#</span><span class="nav-label">Manage Akun</span></a>
                     @endif
