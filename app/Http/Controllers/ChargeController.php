@@ -19,6 +19,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Table;
 use PhpOffice\PhpSpreadsheet\Worksheet\Table\TableStyle;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
+
 class ChargeController extends Controller
 {
     public function index(Request $request): View
@@ -284,6 +285,24 @@ class ChargeController extends Controller
         $pmoOptions = Employ::where('role', 2)->orderBy('employ_name')->get(['employ_id', 'employ_name']);
 
         return view('charges.edit', compact('charge', 'pmOptions', 'pmoOptions'));
+    }
+
+    public function deleteSelected(Request $request){
+        $billing_id = $request->input('billing_id');
+        try{
+            DB::transaction(function () use ($billing_id){
+                $billing = ProjectBilling::findOrFail($billing_id);
+                $project_id = $billing->project_id;
+
+                $billing->delete();
+                if($project_id){
+                    Project::where('project_id', $project_id)->delete();
+                }
+            });
+            return redirect()->back()->with('success', 'Data pembayaran berhasil dihapus.');
+        }catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
+        }
     }
 
     public function store(Request $request): RedirectResponse
