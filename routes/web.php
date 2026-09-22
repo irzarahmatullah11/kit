@@ -26,6 +26,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/account/edit/{id}', [ManageAccount::class, 'editAccount'])->name('account.edit');
     Route::put('/account/edit/{id}', [ManageAccount::class, 'editpush'])->name('account.edit.push');
     Route::delete('/account/delete/{id}', [ManageAccount::class, 'deleteAccount'])->name('account.delete');
+    Route::delete('/charges/delete', [ChargeController::class, 'deleteSelected'])->name('charges.delete.selected');
 });
 
 
