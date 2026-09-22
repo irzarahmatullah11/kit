@@ -127,84 +127,9 @@
                             <span class="summary-caption">{{ $activeStatus ? 'filter aktif: ' . $activeStatus : 'semua baris matrix' }}</span>
                         </a>
                     </section>
-                    <section class="summary-grid" aria-labelledby="trend-chart-title" style="margin-top: 2rem; display: block;">
-                        <div class="summary-card" style="width: 100%; max-width: 100%; padding: 24px;">
-                            <h2 id="trend-chart-title" style="font-size: 1.1rem; font-weight: 600; color: #2C5E5E; margin-bottom: 20px;">Trend Realisasi Biaya per Bulan</h2>
-                            <div style="position: relative; height: 300px; width: 100%;">
-                                <canvas id="trendChart"></canvas>
-                            </div>
-                        </div>
-                    </section>
-                    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-                    <script>
-                        document.addEventListener('DOMContentLoaded', function () {
-                            const canvas = document.getElementById('trendChart');
-                            const labels = @json($chartLabels ?? []);
-                            const data = @json($chartData ?? []);
-
-                            if (!canvas || labels.length === 0) {
-                                return;
-                            }
-
-                            new Chart(canvas, {
-                                type: 'line',
-                                data: {
-                                    labels,
-                                    datasets: [{
-                                        label: 'Total Realisasi (Rp)',
-                                        data,
-                                        borderColor: '#2C5E5E',
-                                        backgroundColor: 'rgba(44, 94, 94, 0.1)',
-                                        borderWidth: 3,
-                                        pointBackgroundColor: '#E5A93D',
-                                        pointBorderColor: '#fff',
-                                        pointBorderWidth: 2,
-                                        pointRadius: 5,
-                                        fill: true,
-                                        tension: 0.4,
-                                    }]
-                                },
-                                options: {
-                                    responsive: true,
-                                    maintainAspectRatio: false,
-                                    plugins: {
-                                        legend: { display: false },
-                                        tooltip: {
-                                            callbacks: {
-                                                label: function (context) {
-                                                    return 'Total Realisasi: Rp ' + new Intl.NumberFormat('id-ID').format(context.parsed.y);
-                                                }
-                                            }
-                                        }
-                                    },
-                                    scales: {
-                                        y: {
-                                            beginAtZero: true,
-                                            ticks: {
-                                                callback: function (value) {
-                                                    if (value >= 1000000000) {
-                                                        return 'Rp ' + (value / 1000000000) + ' Miliar';
-                                                    }
-
-                                                    if (value >= 1000000) {
-                                                        return 'Rp ' + (value / 1000000) + ' Juta';
-                                                    }
-
-                                                    return 'Rp ' + new Intl.NumberFormat('id-ID').format(value);
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            });
-                        });
-                    </script>
                     <section class="managed-service-section" aria-labelledby="managed-service-title">
                         <div class="section-heading managed-service-heading">
-                            <div>
-                                <span class="eyebrow">MANAGED SERVICES / SEWA</span>
-                                <h2 id="managed-service-title">Informasi Progress Managed Services/Sewa</h2>
-                            </div>
+                
                             <form method="GET" action="{{ route('dashboard') }}" class="managed-service-filter">
                                 <label for="managed-service-period">Periode</label>
                                 <select id="managed-service-period" name="ms_period" onchange="this.form.submit()">
@@ -338,6 +263,78 @@
                             });
                         </script>
                     @endif
+                    <section class="summary-grid" aria-labelledby="trend-chart-title" style="margin-top: 2rem; display: block;">
+                        <div class="summary-card" style="width: 100%; max-width: 100%; padding: 24px;">
+                            <h2 id="trend-chart-title" style="font-size: 1.1rem; font-weight: 600; color: #2C5E5E; margin-bottom: 20px;">Trend Realisasi Biaya per Bulan</h2>
+                            <div style="position: relative; height: 300px; width: 100%;">
+                                <canvas id="trendChart"></canvas>
+                            </div>
+                        </div>
+                    </section>
+                    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function () {
+                            const canvas = document.getElementById('trendChart');
+                            const labels = @json($chartLabels ?? []);
+                            const data = @json($chartData ?? []);
+
+                            if (!canvas || labels.length === 0) {
+                                return;
+                            }
+
+                            new Chart(canvas, {
+                                type: 'line',
+                                data: {
+                                    labels,
+                                    datasets: [{
+                                        label: 'Total Realisasi (Rp)',
+                                        data,
+                                        borderColor: '#2C5E5E',
+                                        backgroundColor: 'rgba(44, 94, 94, 0.1)',
+                                        borderWidth: 3,
+                                        pointBackgroundColor: '#E5A93D',
+                                        pointBorderColor: '#fff',
+                                        pointBorderWidth: 2,
+                                        pointRadius: 5,
+                                        fill: true,
+                                        tension: 0.4,
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: { display: false },
+                                        tooltip: {
+                                            callbacks: {
+                                                label: function (context) {
+                                                    return 'Total Realisasi: Rp ' + new Intl.NumberFormat('id-ID').format(context.parsed.y);
+                                                }
+                                            }
+                                        }
+                                    },
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            ticks: {
+                                                callback: function (value) {
+                                                    if (value >= 1000000000) {
+                                                        return 'Rp ' + (value / 1000000000) + ' Miliar';
+                                                    }
+
+                                                    if (value >= 1000000) {
+                                                        return 'Rp ' + (value / 1000000) + ' Juta';
+                                                    }
+
+                                                    return 'Rp ' + new Intl.NumberFormat('id-ID').format(value);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        });
+                    </script>
                 @else
                     <div class="content-grid">
                         <section class="form-panel charge-form-panel" aria-labelledby="form-title" data-charge-modal aria-hidden="true">
@@ -400,7 +397,7 @@
                         </section>
 
                         <section class="history-panel" aria-labelledby="history-title">
-                            <div class="section-heading history-heading"><div><span class="eyebrow">DAFTAR PEMBAYARAN</span><h2 id="history-title">{{ $page === 'one_time' ? 'LIST one time charge' : 'LIST Manage Service' }}</h2></div><span class="record-count">{{ $charges->total() }} total</span></div>
+                            <div class="section-heading history-heading"><div><span class="eyebrow">List Project</span><h2 id="history-title">{{ $page === 'one_time' ? 'LIST one time charge' : 'LIST Manage Service' }}</h2></div><span class="record-count">{{ $charges->total() }} total</span></div>
 
                             <form class="matrix-filter-form" method="GET" action="{{ $page === 'one_time' ? route('charges.one-time') : route('charges.monthly') }}">
                                 <div class="matrix-tools">
