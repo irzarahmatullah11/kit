@@ -1,21 +1,4 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit pembayaran</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-<body>
-    <div class="app-shell">
-        <aside class="sidebar">
-            <a class="brand" href="{{ route('dashboard') }}"><span class="brand-mark">RB</span><span>Ruang Biaya</span></a>
-            <nav class="sidebar-nav">
-                <a class="sidebar-nav-link" href="{{ route('dashboard') }}">Dashboard</a>
-                <a class="sidebar-nav-link" href="{{ route('charges.one-time') }}">+ One-time / Charge</a>
-                <a class="sidebar-nav-link" href="{{ route('charges.monthly') }}">Bulanan</a>
-            </nav>
-        </aside>
+<x-app-layout>
         <main class="main-content edit-page">
             <header class="topbar"><div><span class="eyebrow">EDIT PEMBAYARAN</span><h1>{{ $charge->project?->project_name }}</h1></div><a class="back-link" href="{{ route('dashboard') }}">Kembali</a></header>
             <section class="form-panel edit-panel">
@@ -54,6 +37,4 @@
                 </form>
             </section>
         </main>
-    </div>
-</body>
-</html>
+</x-app-layout>
