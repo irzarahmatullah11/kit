@@ -9,6 +9,7 @@
 
             <section class="history-panel edit-panel" aria-labelledby="form-title" style="max-width: 700px;">
                 <div class="section-heading">
+                    <div>
                         <span class="eyebrow">RESET PASSWORD</span>
                         <h2 id="form-title">User: {{ $user->employ_name }}</h2>
                     </div>
