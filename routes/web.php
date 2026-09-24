@@ -15,6 +15,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/charges/{charge}/edit', [ChargeController::class, 'edit'])->name('charges.edit');
     Route::put('/charges/{charge}', [ChargeController::class, 'update'])->name('charges.update');
     Route::post('/charges', [ChargeController::class, 'store'])->name('charges.store');   
+    Route::get('/account', [ManageAccount::class, 'resetpassword'])->name('user.reset.password');
+    Route::put('/account', [ManageAccount::class, 'changepassword'])->name('user.change.password');
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function(){
@@ -24,6 +26,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/account/edit/{id}', [ManageAccount::class, 'editAccount'])->name('account.edit');
     Route::put('/account/edit/{id}', [ManageAccount::class, 'editpush'])->name('account.edit.push');
     Route::delete('/account/delete/{id}', [ManageAccount::class, 'deleteAccount'])->name('account.delete');
+    Route::delete('/charges/delete', [ChargeController::class, 'deleteSelected'])->name('charges.delete.selected');
 });
 
 

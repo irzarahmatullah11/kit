@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Employ;
 use App\Models\Project;
 use App\Models\ProjectBilling;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +19,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Table;
 use PhpOffice\PhpSpreadsheet\Worksheet\Table\TableStyle;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
+
 class ChargeController extends Controller
 {
     public function index(Request $request): View
@@ -28,7 +30,8 @@ class ChargeController extends Controller
             null,
             $request->query('service'),
             $request->query('search'),
-            $request->query('filters', [])
+            $request->query('filters', []),
+            $request->query('ms_period')
         );
     }
 
@@ -277,31 +280,54 @@ class ChargeController extends Controller
 
     public function edit(ProjectBilling $charge): View
     {
-        $charge->load('project.pm');
+        $charge->load('project.pm', 'project.pmo');
+        $pmOptions = Employ::where('role', 1)->orderBy('employ_name')->get(['employ_id', 'employ_name']);
+        $pmoOptions = Employ::where('role', 2)->orderBy('employ_name')->get(['employ_id', 'employ_name']);
 
-        return view('charges.edit', compact('charge'));
+        return view('charges.edit', compact('charge', 'pmOptions', 'pmoOptions'));
+    }
+
+    public function deleteSelected(Request $request){
+        $billing_id = $request->input('billing_id');
+        try{
+            DB::transaction(function () use ($billing_id){
+                $billing = ProjectBilling::findOrFail($billing_id);
+                $project_id = $billing->project_id;
+
+                $billing->delete();
+                if($project_id){
+                    Project::where('project_id', $project_id)->delete();
+                }
+            });
+            return redirect()->back()->with('success', 'Data pembayaran berhasil dihapus.');
+        }catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
+        }
     }
 
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
+            'kategori_layanan' => ['required', 'in:MS,OTM'],
             'project_name' => ['required', 'string', 'max:120'],
             'user' => ['required', 'string', 'max:120'],
             'pm_id' => ['required', 'integer', 'exists:employ,employ_id'],
+            'pmo_id' => ['nullable', 'integer', 'exists:employ,employ_id', 'required_if:kategori_layanan,MS'],
+            'ms_no' => ['nullable', 'string', 'max:80', 'required_if:kategori_layanan,MS'],
             'cost_center' => ['required', 'string', 'max:80'],
             'no_kontrak' => ['required', 'string', 'max:120'],
             'nilai_kontrak' => ['required', 'numeric', 'min:0'],
+            'nilai_bulan' => ['nullable', 'numeric', 'min:0', 'required_if:kategori_layanan,MS'],
             'tgl_kontrak' => ['required', 'date'],
-            'kategori_layanan' => ['required', 'in:MS,OTM'],
-            'tipe_pengadaan' => ['nullable', 'string', 'max:80'],
+            'tipe_pengadaan' => ['nullable', 'string', 'max:80', 'required_if:kategori_layanan,OTM'],
             'priode' => ['required', 'string', 'max:30'],
-            'due_date_kontrak' => ['nullable', 'date'],
+            'due_date_kontrak' => ['nullable', 'date', 'required_if:kategori_layanan,OTM'],
             'tgl_pembuatan_ba' => ['nullable', 'date'],
             'tgl_paraf_pm' => ['nullable', 'date'],
             'tgl_ttd_manager' => ['nullable', 'date'],
             'tgl_submit_dokumen' => ['nullable', 'date'],
             'tgl_permintaan_invoice' => ['nullable', 'date'],
-            'note' => ['nullable', 'string'],
+            'note_1' => ['nullable', 'string', 'max:1000'],
             'file_kontrak' => ['nullable', 'file', 'mimes:pdf', 'extensions:pdf', 'max:10240'],
             'file_ba' => ['nullable', 'file', 'mimes:pdf', 'extensions:pdf', 'max:10240'],
         ]);
@@ -327,13 +353,16 @@ class ChargeController extends Controller
                 'nilai_kontrak' => $data['nilai_kontrak'],
                 'tgl_kontrak' => $data['tgl_kontrak'],
                 'pm_id' => $data['pm_id'],
+                'pmo_id' => $data['pmo_id'] ?? null,
             ]);
 
             ProjectBilling::create([
                 'project_id' => $project->project_id,
+                'ms_no' => $data['ms_no'] ?? null,
                 'kategori_layanan' => $data['kategori_layanan'],
                 'tipe_pengadaan' => $data['tipe_pengadaan'],
                 'priode' => $data['priode'],
+                'nilai_bulan' => $data['nilai_bulan'] ?? null,
                 'due_date_kontrak' => $data['due_date_kontrak'],
                 'tgl_pembuatan_ba' => $data['tgl_pembuatan_ba'],
                 'tgl_paraf_pm' => $data['tgl_paraf_pm'],
@@ -341,7 +370,8 @@ class ChargeController extends Controller
                 'tgl_submit_dokumen' => $data['tgl_submit_dokumen'],
                 'tgl_permintaan_invoice' => $data['tgl_permintaan_invoice'],
                 'status' => $data['status'],
-                'note' => $data['note'],
+                'note' => $data['note_1'] ?? null,
+                'note_1' => $data['note_1'] ?? null,
                 'file_kontrak' => $documentPaths['file_kontrak'] ?? null,
                 'file_ba' => $documentPaths['file_ba'] ?? null,
             ]);
@@ -355,22 +385,26 @@ class ChargeController extends Controller
     public function update(Request $request, ProjectBilling $charge): RedirectResponse
     {
         $data = $request->validate([
+            'kategori_layanan' => ['required', 'in:MS,OTM'],
             'project_name' => ['required', 'string', 'max:120'],
             'user' => ['required', 'string', 'max:120'],
+            'pm_id' => ['required', 'integer', 'exists:employ,employ_id'],
+            'pmo_id' => ['nullable', 'integer', 'exists:employ,employ_id', 'required_if:kategori_layanan,MS'],
+            'ms_no' => ['nullable', 'string', 'max:80', 'required_if:kategori_layanan,MS'],
             'cost_center' => ['required', 'string', 'max:80'],
             'no_kontrak' => ['required', 'string', 'max:120'],
             'nilai_kontrak' => ['required', 'numeric', 'min:0'],
             'tgl_kontrak' => ['required', 'date'],
-            'kategori_layanan' => ['required', 'in:MS,OTM'],
-            'tipe_pengadaan' => ['nullable', 'string', 'max:80'],
+            'nilai_bulan' => ['nullable', 'numeric', 'min:0', 'required_if:kategori_layanan,MS'],
+            'tipe_pengadaan' => ['nullable', 'string', 'max:80', 'required_if:kategori_layanan,OTM'],
             'priode' => ['required', 'string', 'max:30'],
-            'due_date_kontrak' => ['nullable', 'date'],
+            'due_date_kontrak' => ['nullable', 'date', 'required_if:kategori_layanan,OTM'],
             'tgl_pembuatan_ba' => ['nullable', 'date'],
             'tgl_paraf_pm' => ['nullable', 'date'],
             'tgl_ttd_manager' => ['nullable', 'date'],
             'tgl_submit_dokumen' => ['nullable', 'date'],
             'tgl_permintaan_invoice' => ['nullable', 'date'],
-            'note' => ['nullable', 'string'],
+            'note_1' => ['nullable', 'string', 'max:1000'],
             'file_kontrak' => ['nullable', 'file', 'mimes:pdf', 'extensions:pdf', 'max:10240'],
             'file_ba' => ['nullable', 'file', 'mimes:pdf', 'extensions:pdf', 'max:10240'],
         ]);
@@ -394,14 +428,18 @@ class ChargeController extends Controller
             'no_kontrak' => $data['no_kontrak'],
             'nilai_kontrak' => $data['nilai_kontrak'],
             'tgl_kontrak' => $data['tgl_kontrak'],
+            'pm_id' => $data['pm_id'],
+            'pmo_id' => $data['pmo_id'] ?? null,
         ]);
         $previousDocumentPaths = [
             'file_kontrak' => $charge->file_kontrak,
             'file_ba' => $charge->file_ba,
         ];
         $billingData = collect($data)
-            ->except(['project_name', 'user', 'cost_center', 'no_kontrak', 'nilai_kontrak', 'tgl_kontrak', 'file_kontrak', 'file_ba'])
+            ->except(['project_name', 'user', 'cost_center', 'no_kontrak', 'nilai_kontrak', 'tgl_kontrak', 'pm_id', 'pmo_id', 'file_kontrak', 'file_ba'])
             ->all();
+
+        $billingData['note'] = $data['note_1'] ?? null;
 
         foreach ($documentPaths as $field => $path) {
             $billingData[$field] = $path;
@@ -436,7 +474,7 @@ class ChargeController extends Controller
         return $paths;
     }
 
-    private function page(string $page, $query, ?string $status = null, ?string $service = null, ?string $search = null, array $filters = []): View
+    private function page(string $page, $query, ?string $status = null, ?string $service = null, ?string $search = null, array $filters = [], ?string $managedServicePeriodInput = null): View
     {
         $chargesQuery = $query->with('project.pm')->latest('billing_id');
 
@@ -564,6 +602,102 @@ class ChargeController extends Controller
             ->orderBy('employ_name')
             ->get(['employ_id', 'employ_name']);
 
+        $pmoOptions = Employ::query()
+            ->where('role', 2)
+            ->orderBy('employ_name')
+            ->get(['employ_id', 'employ_name']);
+
+        $trendData = DB::table('project')
+            ->selectRaw('DATE_FORMAT(tgl_kontrak, "%Y-%m") as month, SUM(nilai_kontrak) as total_biaya')
+            ->whereNotNull('tgl_kontrak')
+            ->groupByRaw('DATE_FORMAT(tgl_kontrak, "%Y-%m")')
+            ->orderBy('month')
+            ->get();
+
+        $chartLabels = $trendData->map(fn ($data) => Carbon::parse($data->month.'-01')->locale('id')->translatedFormat('F Y'))->values();
+        $chartData = $trendData->pluck('total_biaya')->map(fn ($total) => (float) $total)->values();
+
+        $managedServicePeriod = trim((string) $managedServicePeriodInput);
+        if (! preg_match('/^\d{4}-\d{2}$/', $managedServicePeriod)) {
+            $managedServicePeriod = '';
+        }
+
+        $managedServicePeriodOptions = DB::table('project_billing as pb')
+            ->join('project as p', 'p.project_id', '=', 'pb.project_id')
+            ->where('pb.kategori_layanan', 'MS')
+            ->whereNotNull('p.tgl_kontrak')
+            ->selectRaw('DATE_FORMAT(p.tgl_kontrak, "%Y-%m") as period')
+            ->distinct()
+            ->orderByDesc('period')
+            ->pluck('period')
+            ->values();
+
+        $managedServiceRowsQuery = DB::table('project_billing as pb')
+            ->join('project as p', 'p.project_id', '=', 'pb.project_id')
+            ->leftJoin('employ as e', 'e.employ_id', '=', 'p.pm_id')
+            ->where('pb.kategori_layanan', 'MS')
+            ->select([
+                'pb.project_id',
+                'pb.status',
+                'pb.note',
+                'pb.tgl_pembuatan_ba',
+                'pb.tgl_paraf_pm',
+                'pb.tgl_ttd_manager',
+                'pb.tgl_submit_dokumen',
+                'pb.tgl_permintaan_invoice',
+                'p.project_name',
+                'p.tgl_kontrak',
+                'e.employ_name as pm_name',
+            ]);
+
+        if ($managedServicePeriod !== '') {
+            $managedServiceRowsQuery->whereRaw('DATE_FORMAT(p.tgl_kontrak, "%Y-%m") = ?', [$managedServicePeriod]);
+        }
+
+        $managedServiceRows = $managedServiceRowsQuery
+            ->orderBy('e.employ_name')
+            ->orderBy('p.project_name')
+            ->get();
+
+        $managedServiceStatusCounts = $managedServiceRows
+            ->groupBy('project_id')
+            ->map(fn ($projectRows) => $projectRows->contains(fn ($row) => strtolower((string) $row->status) === 'done') ? 'Done' : 'On Progress')
+            ->countBy()
+            ->sortKeys();
+
+        $managedServicePmSummary = $managedServiceRows
+            ->groupBy(fn ($row) => $row->pm_name ?: 'Belum ditentukan')
+            ->map(function ($pmRows, $pmName) {
+                $projectGroups = $pmRows->groupBy('project_id');
+                $projects = $projectGroups->map(function ($projectRows) {
+                    $row = $projectRows->first();
+                    $completedMilestones = collect([
+                        $row->tgl_pembuatan_ba,
+                        $row->tgl_paraf_pm,
+                        $row->tgl_ttd_manager,
+                        $row->tgl_submit_dokumen,
+                        $row->tgl_permintaan_invoice,
+                    ])->filter()->count();
+
+                    return [
+                        'name' => $row->project_name,
+                        'status' => strtolower((string) $row->status) === 'done' ? 'Done' : 'On Progress',
+                        'progress' => $completedMilestones * 20,
+                        'note' => trim((string) ($row->note ?? '')),
+                    ];
+                });
+
+                return [
+                    'pm' => $pmName,
+                    'total_projects' => $projects->count(),
+                    'progress_ba' => round($projects->avg('progress') ?? 0, 1),
+                    'on_progress_projects' => $projects->where('status', 'On Progress')->pluck('name')->filter()->values()->all(),
+                    'information' => $projects->pluck('note')->filter()->unique()->values()->all(),
+                ];
+            })
+            ->sortBy('pm')
+            ->values();
+
         return view('welcome', [
             'charges' => $charges,
             'dashboardRows' => $dashboardRows,
@@ -575,16 +709,14 @@ class ChargeController extends Controller
             'activeFilters' => $normalizedFilters ?? [],
             'filterOptions' => $filterOptions,
             'pmOptions' => $pmOptions,
+            'pmoOptions' => $pmoOptions,
             'monthlyTotal' => $monthly->sum('nilai_bulan'),
             'monthlyCount' => $monthly->count(),
 
-            // --- PERBAIKAN LOGIKA ONE-TIME CHARGE ---
-            // Lakukan JOIN ke tabel project agar bisa melakukan SUM pada kolom nilai_kontrak
             'oneTimeTotal' => ProjectBilling::join('project', 'project_billing.project_id', '=', 'project.project_id')
                 ->where('project_billing.kategori_layanan', 'OTM')
                 ->sum('project.nilai_kontrak'),
             'oneTimeCount' => $oneTime->count(),
-            // ----------------------------------------
 
             'dashboardTotals' => [
                 'projectTotal' => Project::count(),
@@ -592,6 +724,13 @@ class ChargeController extends Controller
                 'doneCount' => ProjectBilling::where('status', 'Done')->count(),
                 'progressCount' => ProjectBilling::where('status', 'In Progress')->count(),
             ],
+
+            'chartLabels' => $chartLabels,
+            'chartData' => $chartData,
+            'managedServicePeriod' => $managedServicePeriod,
+            'managedServicePeriodOptions' => $managedServicePeriodOptions,
+            'managedServiceStatusCounts' => $managedServiceStatusCounts,
+            'managedServicePmSummary' => $managedServicePmSummary,
         ]);
     }
 }
