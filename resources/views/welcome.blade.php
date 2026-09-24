@@ -27,6 +27,23 @@
                 </div>
 
                 @if ($page === 'dashboard')
+                    <div class="dashboard-period-bar">
+                        <div>
+                            <span class="eyebrow">PERFORMANCE WINDOW</span>
+                            <strong>Ringkasan dashboard</strong>
+                        </div>
+                        <form method="GET" action="{{ route('dashboard') }}" class="dashboard-period-filter">
+                            <label for="dashboard-period">Periode</label>
+                            <select id="dashboard-period" name="ms_period" onchange="this.form.submit()">
+                                <option value="">Semua Periode</option>
+                                @foreach ($managedServicePeriodOptions ?? [] as $period)
+                                    <option value="{{ $period }}" @selected(($managedServicePeriod ?? '') === $period)>
+                                        {{ \Carbon\Carbon::createFromFormat('Y-m', $period)->locale('id')->translatedFormat('F Y') }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </form>
+                    </div>
                     <section class="export-panel" data-export-modal aria-hidden="true">
                         <div class="modal-backdrop" data-close-export-modal></div>
                         <div class="modal-card export-card">
@@ -34,6 +51,7 @@
                                 <div>
                                     <span class="eyebrow">EXPORT XLSX</span>
                                     <h2>Pratinjau ekspor data dashboard</h2>
+                                    <p>Data MS dan OTC akan diunduh dalam sheet terpisah.</p>
                                 </div>
                                 <button class="modal-close" type="button" data-close-export-modal aria-label="Tutup popup ekspor">&times;</button>
                             </div>
@@ -85,7 +103,7 @@
 
                             <div class="export-actions">
                                 <button class="secondary-button" type="button" data-close-export-modal>Batalkan</button>
-                                <a class="submit-button export-button" href="{{ route('dashboard.export-csv') }}">Download XLSX</a>
+                                <a class="submit-button export-button" href="{{ route('dashboard.export-csv', request()->query()) }}">Download XLSX</a>
                             </div>
                         </div>
                     </section>
@@ -112,8 +130,8 @@
                             <span class="summary-caption">{{ $oneTimeCount }} transaksi</span>
                         </article>
                     </section>
-                    <section class="summary-grid" aria-label="Status dashboard" style="display: flex; justify-content: center; gap: 1.5rem;">
-                        <div class="summary-card status-filter-card {{ $activeStatus === 'In Progress' ? 'is-active' : '' }}" aria-disabled="true" style="width: 100%; max-width: 400px;">
+                    <section class="summary-grid status-summary-grid" aria-label="Status dashboard">
+                        <div class="summary-card status-filter-card {{ $activeStatus === 'In Progress' ? 'is-active' : '' }}" aria-disabled="true">
                             <div class="summary-icon">⏳</div>
                             <div>
                                 <span class="summary-label">In Progress</span>
@@ -121,7 +139,7 @@
                             </div>
                             <span class="summary-caption">masih berjalan</span>
                         </div>
-                        <a href="{{ route('dashboard') }}" class="summary-card summary-card-note status-filter-card {{ !$activeStatus ? 'is-active' : '' }}" style="width: 100%; max-width: 400px;">
+                        <a href="{{ route('dashboard') }}" class="summary-card summary-card-note status-filter-card {{ !$activeStatus ? 'is-active' : '' }}">
                             <span class="summary-label">Total catatan</span>
                             <strong>{{ $dashboardTotalCount }}</strong>
                             <span class="summary-caption">{{ $activeStatus ? 'filter aktif: ' . $activeStatus : 'semua baris matrix' }}</span>
@@ -129,18 +147,10 @@
                     </section>
                     <section class="managed-service-section" aria-labelledby="managed-service-title">
                         <div class="section-heading managed-service-heading">
-                
-                            <form method="GET" action="{{ route('dashboard') }}" class="managed-service-filter">
-                                <label for="managed-service-period">Periode</label>
-                                <select id="managed-service-period" name="ms_period" onchange="this.form.submit()">
-                                    <option value="">Semua periode</option>
-                                    @foreach ($managedServicePeriodOptions ?? [] as $period)
-                                        <option value="{{ $period }}" @selected(($managedServicePeriod ?? '') === $period)>
-                                            {{ \Carbon\Carbon::createFromFormat('Y-m', $period)->locale('id')->translatedFormat('F Y') }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </form>
+                            <div>
+                                <span class="eyebrow">MANAGED SERVICES / SEWA</span>
+                                <h2 id="managed-service-title">Informasi progress operasional</h2>
+                            </div>
                         </div>
 
                         <div class="managed-service-grid">
@@ -263,10 +273,16 @@
                             });
                         </script>
                     @endif
-                    <section class="summary-grid" aria-labelledby="trend-chart-title" style="margin-top: 2rem; display: block;">
-                        <div class="summary-card" style="width: 100%; max-width: 100%; padding: 24px;">
-                            <h2 id="trend-chart-title" style="font-size: 1.1rem; font-weight: 600; color: #2C5E5E; margin-bottom: 20px;">Trend Realisasi Biaya per Bulan</h2>
-                            <div style="position: relative; height: 300px; width: 100%;">
+                    <section class="trend-section" aria-labelledby="trend-chart-title">
+                        <div class="trend-card">
+                            <div class="trend-heading">
+                                <div>
+                                    <span class="eyebrow">FINANCIAL MOMENTUM</span>
+                                    <h2 id="trend-chart-title">Trend Realisasi Biaya per Bulan</h2>
+                                </div>
+                                <span class="record-count">{{ $managedServicePeriod ? 'Periode terpilih' : 'Seluruh periode' }}</span>
+                            </div>
+                            <div class="trend-chart-wrap">
                                 <canvas id="trendChart"></canvas>
                             </div>
                         </div>
