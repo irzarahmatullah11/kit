@@ -92,10 +92,6 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($billings as $billing) {
-            $billing['ms_no'] = $billing['kategori_layanan'] === 'MS'
-                ? 'MS-'.str_pad((string) $billing['project_id'], 4, '0', STR_PAD_LEFT)
-                : null;
-            $billing['note_1'] = $billing['note'];
             DB::table('project_billing')->insert($billing);
         }
     }
