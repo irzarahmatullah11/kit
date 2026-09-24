@@ -24,8 +24,8 @@
                 </div>
                 <nav class="sidebar-nav" aria-label="Navigasi utama">
                     <a class="sidebar-nav-link {{ request()->routeIs('dashboard') ? 'is-active' : '' }}" href="{{ route('dashboard') }}"><span>◈</span><span class="nav-label">Dashboard</span></a>
-                    <a class="sidebar-nav-link {{ request()->routeIs('charges.one-time') ? 'is-active' : '' }}" href="{{ route('charges.one-time') }}"><span>+</span><span class="nav-label">One-time / Charge</span></a>
-                    <a class="sidebar-nav-link {{ request()->routeIs('charges.monthly') ? 'is-active' : '' }}" href="{{ route('charges.monthly') }}"><span>↻</span><span class="nav-label">Bulanan</span></a>
+                    <a class="sidebar-nav-link {{ request()->routeIs('charges.one-time') ? 'is-active' : '' }}" href="{{ route('charges.one-time') }}"><span>+</span><span class="nav-label">One time Charge</span></a>
+                    <a class="sidebar-nav-link {{ request()->routeIs('charges.monthly') ? 'is-active' : '' }}" href="{{ route('charges.monthly') }}"><span>↻</span><span class="nav-label">Manage Service</span></a>
                     @if (auth()->user()?->isManager())
                         <a class="sidebar-nav-link {{ request()->routeIs('admin.account.show') ? 'is-active' : '' }}" href="{{ route('admin.account.show') }}"><span>#</span><span class="nav-label">Manage Akun</span></a>
                     @endif
@@ -35,14 +35,24 @@
                     <h2>Lebih tenang saat semua tercatat.</h2>
                     <p>Kelola tagihan bulanan dan pengeluaran sekali bayar di satu tempat.</p>
                 </div>
-                <div class="sidebar-intro">
-                    <h3>{{ auth()->user()?->employ_name ?? auth()->user()?->name }}</h3>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" style="cursor: pointer; padding: 8px 16px; background-color: #ef4444; color: white; border: none; border-radius: 4px;">
-                            Log Out
-                        </button>
-                    </form>
+                <div class="sidebar-user" style="position: relative;">
+                    <!-- Tombol Trigger -->
+                    <button type="button" class="flex user" onclick="document.getElementById('user-dropdown').classList.toggle('show-dropdown')" style="background: transparent; border: none; color: inherit; width: 100%; text-align: left; cursor: pointer;">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white-700 profile" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <h3>{{ auth()->user()?->employ_name ?? auth()->user()?->name }}</h3>
+                    </button>
+
+                    <div id="user-dropdown" class="dropdown-content">
+                        <a href="{{ route('user.reset.password') }}" class="dropdown-link">Ganti Password</a>
+                        <form method="POST" action="{{ route('logout') }}" style="margin: 0;">
+                            @csrf
+                            <button type="submit" class="dropdown-link w-full text-left" style="width: 100%; border: none; background: transparent; cursor: pointer; text-align: left;">
+                                Logout
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </aside>
 
