@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\DashboardExport;
 use App\Models\Employ;
 use App\Models\Project;
 use App\Models\ProjectBilling;
@@ -11,14 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Style\Border;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Worksheet\Table;
-use PhpOffice\PhpSpreadsheet\Worksheet\Table\TableStyle;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-
+use Maatwebsite\Excel\Facades\Excel;
 
 class ChargeController extends Controller
 {
@@ -65,8 +59,15 @@ class ChargeController extends Controller
         $service = $request->query('service');
         $search = trim((string) $request->query('search', ''));
         $filters = $request->query('filters', []);
+        $managedServicePeriod = trim((string) $request->query('ms_period', ''));
 
-        $rowsQuery = ProjectBilling::with('project.pm')->latest('billing_id');
+        $rowsQuery = ProjectBilling::with('project.pm', 'project.pmo')->latest('billing_id');
+
+        if (preg_match('/^\d{4}-\d{2}$/', $managedServicePeriod)) {
+            $periodStart = Carbon::createFromFormat('Y-m', $managedServicePeriod)->startOfMonth();
+            $periodEnd = $periodStart->copy()->endOfMonth();
+            $rowsQuery->whereHas('project', fn ($projectQuery) => $projectQuery->whereBetween('tgl_kontrak', [$periodStart, $periodEnd]));
+        }
 
         if ($status) {
             $rowsQuery->where('status', $status);
@@ -159,123 +160,9 @@ class ChargeController extends Controller
             }
         }
 
-        $rows = $rowsQuery->get();
-
-        $spreadsheet = new Spreadsheet;
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('Matrix Dashboard');
-
-        $headers = ['No', 'PM', 'Project', 'USER', 'Type Pengadaan', 'Cost Center', 'Kontrak / PO / JO', 'Nilai Kontrak', 'Periode Pengadaan', 'Tanggal Kontrak / PO / JO', 'Masa Kontrak Due Date', 'Tgl Pembuatan BA', 'Tgl Paraf PM', 'Tgl TTD Manager', 'Tgl Submit Dokumen', 'Tgl Permintaan Invoice', 'Status', 'Catatan'];
-        $sheetData = [$headers];
-
-        $rowNumber = 1;
-        foreach ($rows as $row) {
-            $sheetData[] = [
-                $rowNumber,
-                $row->pm ?? '-',
-                $row->name ?? '-',
-                $row->user_name ?? '-',
-                $row->procurement_type ?? '-',
-                $row->cost_center ?? '-',
-                $row->contract_reference ?? '-',
-                (float) ($row->amount ?? 0),
-                $row->procurement_period ?? '-',
-                $row->contract_date?->format('Y-m-d') ?? '-',
-                $row->due_date?->format('Y-m-d') ?? '-',
-                $row->tgl_pembuatan_ba?->format('Y-m-d') ?? '-',
-                $row->tgl_paraf_pm?->format('Y-m-d') ?? '-',
-                $row->tgl_ttd_manager?->format('Y-m-d') ?? '-',
-                $row->tgl_submit_dokumen?->format('Y-m-d') ?? '-',
-                $row->tgl_permintaan_invoice?->format('Y-m-d') ?? '-',
-                $row->status ?? '-',
-                $row->note ?? '-',
-            ];
-
-            $rowNumber++;
-        }
-
-        $sheet->fromArray($sheetData, null, 'A1');
-
-        $lastRow = count($sheetData) + 1;
-
-        $headerStyle = [
-            'font' => [
-                'bold' => true,
-                'color' => ['rgb' => 'FFFFFF'],
-                'name' => 'Calibri',
-                'size' => 11,
-            ],
-            'fill' => [
-                'fillType' => Fill::FILL_SOLID,
-                'startColor' => ['rgb' => '1F4E78'],
-            ],
-            'alignment' => [
-                'horizontal' => Alignment::HORIZONTAL_CENTER,
-                'vertical' => Alignment::VERTICAL_CENTER,
-            ],
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => Border::BORDER_THIN,
-                    'color' => ['rgb' => 'D9E2F3'],
-                ],
-            ],
-        ];
-
-        $sheet->getStyle('A1:R1')->applyFromArray($headerStyle);
-        $sheet->getStyle('A1:R'.$lastRow)->getAlignment()->setWrapText(true);
-
-        $bodyStyle = [
-            'font' => [
-                'name' => 'Calibri',
-                'size' => 10,
-            ],
-            'alignment' => [
-                'vertical' => Alignment::VERTICAL_CENTER,
-            ],
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => Border::BORDER_THIN,
-                    'color' => ['rgb' => 'D9E2F3'],
-                ],
-            ],
-        ];
-
-        $sheet->getStyle('A2:R'.$lastRow)->applyFromArray($bodyStyle);
-
-        for ($rowIndex = 2; $rowIndex <= $lastRow; $rowIndex++) {
-            $sheet->getStyle('A'.$rowIndex.':L'.$rowIndex)->applyFromArray([
-                'fill' => [
-                    'fillType' => Fill::FILL_SOLID,
-                    'startColor' => ['rgb' => $rowIndex % 2 === 0 ? 'F7F9FC' : 'FFFFFF'],
-                ],
-            ]);
-        }
-
-        $sheet->getStyle('G2:G'.$lastRow)->getNumberFormat()->setFormatCode('#,##0');
-
-        foreach (range('A', 'R') as $column) {
-            $sheet->getColumnDimension($column)->setAutoSize(true);
-        }
-
-        $tableRange = 'A1:R'.$lastRow;
-        $table = new Table($tableRange, 'MatrixDashboardTable');
-        $table->setStyle(new TableStyle(TableStyle::TABLE_STYLE_MEDIUM2));
-        $sheet->addTable($table);
-
         $filename = 'matrix-dashboard-'.now()->format('Ymd_His').'.xlsx';
 
-        $writer = new Xlsx($spreadsheet);
-        $tempFile = tempnam(sys_get_temp_dir(), 'xlsx_');
-
-        if ($tempFile === false) {
-            abort(500, 'Gagal membuat file spreadsheet sementara.');
-        }
-
-        $writer->save($tempFile);
-
-        return response()->download($tempFile, $filename, [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        ])->deleteFileAfterSend(true);
+        return Excel::download(new DashboardExport($rowsQuery), $filename);
     }
 
     public function edit(ProjectBilling $charge): View
@@ -287,21 +174,23 @@ class ChargeController extends Controller
         return view('charges.edit', compact('charge', 'pmOptions', 'pmoOptions'));
     }
 
-    public function deleteSelected(Request $request){
+    public function deleteSelected(Request $request)
+    {
         $billing_id = $request->input('billing_id');
-        try{
-            DB::transaction(function () use ($billing_id){
+        try {
+            DB::transaction(function () use ($billing_id) {
                 $billing = ProjectBilling::findOrFail($billing_id);
                 $project_id = $billing->project_id;
 
                 $billing->delete();
-                if($project_id){
+                if ($project_id) {
                     Project::where('project_id', $project_id)->delete();
                 }
             });
+
             return redirect()->back()->with('success', 'Data pembayaran berhasil dihapus.');
-        }catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal menghapus data: '.$e->getMessage());
         }
     }
 
@@ -478,6 +367,28 @@ class ChargeController extends Controller
     {
         $chargesQuery = $query->with('project.pm')->latest('billing_id');
 
+        $managedServicePeriod = trim((string) $managedServicePeriodInput);
+        if (! preg_match('/^\d{4}-\d{2}$/', $managedServicePeriod)) {
+            $managedServicePeriod = '';
+        }
+
+        $periodStart = $managedServicePeriod !== ''
+            ? Carbon::createFromFormat('Y-m', $managedServicePeriod)->startOfMonth()
+            : null;
+        $periodEnd = $periodStart?->copy()->endOfMonth();
+
+        $applyProjectPeriod = function ($builder) use ($periodStart, $periodEnd): void {
+            if ($periodStart && $periodEnd) {
+                $builder->whereHas('project', fn ($projectQuery) => $projectQuery->whereBetween('tgl_kontrak', [$periodStart, $periodEnd]));
+            }
+        };
+
+        $applyJoinedProjectPeriod = function ($builder) use ($periodStart, $periodEnd): void {
+            if ($periodStart && $periodEnd) {
+                $builder->whereBetween('p.tgl_kontrak', [$periodStart, $periodEnd]);
+            }
+        };
+
         if ($page !== 'dashboard' && $search) {
             $searchTerm = trim($search);
 
@@ -506,9 +417,12 @@ class ChargeController extends Controller
 
         $charges = $chargesQuery->paginate(8);
         $monthly = ProjectBilling::where('kategori_layanan', 'MS');
+        $applyProjectPeriod($monthly);
         $oneTime = ProjectBilling::where('kategori_layanan', 'OTM');
+        $applyProjectPeriod($oneTime);
 
         $dashboardRowsQuery = ProjectBilling::with('project.pm')->latest('billing_id');
+        $applyProjectPeriod($dashboardRowsQuery);
 
         if ($page === 'dashboard') {
             if ($status) {
@@ -607,24 +521,22 @@ class ChargeController extends Controller
             ->orderBy('employ_name')
             ->get(['employ_id', 'employ_name']);
 
-        $trendData = DB::table('project')
+        $trendQuery = DB::table('project')
             ->selectRaw('DATE_FORMAT(tgl_kontrak, "%Y-%m") as month, SUM(nilai_kontrak) as total_biaya')
             ->whereNotNull('tgl_kontrak')
             ->groupByRaw('DATE_FORMAT(tgl_kontrak, "%Y-%m")')
-            ->orderBy('month')
-            ->get();
+            ->orderBy('month');
+
+        if ($periodStart && $periodEnd) {
+            $trendQuery->whereBetween('tgl_kontrak', [$periodStart, $periodEnd]);
+        }
+
+        $trendData = $trendQuery->get();
 
         $chartLabels = $trendData->map(fn ($data) => Carbon::parse($data->month.'-01')->locale('id')->translatedFormat('F Y'))->values();
         $chartData = $trendData->pluck('total_biaya')->map(fn ($total) => (float) $total)->values();
 
-        $managedServicePeriod = trim((string) $managedServicePeriodInput);
-        if (! preg_match('/^\d{4}-\d{2}$/', $managedServicePeriod)) {
-            $managedServicePeriod = '';
-        }
-
-        $managedServicePeriodOptions = DB::table('project_billing as pb')
-            ->join('project as p', 'p.project_id', '=', 'pb.project_id')
-            ->where('pb.kategori_layanan', 'MS')
+        $managedServicePeriodOptions = DB::table('project as p')
             ->whereNotNull('p.tgl_kontrak')
             ->selectRaw('DATE_FORMAT(p.tgl_kontrak, "%Y-%m") as period')
             ->distinct()
@@ -650,9 +562,7 @@ class ChargeController extends Controller
                 'e.employ_name as pm_name',
             ]);
 
-        if ($managedServicePeriod !== '') {
-            $managedServiceRowsQuery->whereRaw('DATE_FORMAT(p.tgl_kontrak, "%Y-%m") = ?', [$managedServicePeriod]);
-        }
+        $applyJoinedProjectPeriod($managedServiceRowsQuery);
 
         $managedServiceRows = $managedServiceRowsQuery
             ->orderBy('e.employ_name')
@@ -698,10 +608,23 @@ class ChargeController extends Controller
             ->sortBy('pm')
             ->values();
 
+        $dashboardProjectsQuery = Project::query();
+        if ($periodStart && $periodEnd) {
+            $dashboardProjectsQuery->whereBetween('tgl_kontrak', [$periodStart, $periodEnd]);
+        }
+
+        $dashboardBillingsQuery = ProjectBilling::query();
+        $applyProjectPeriod($dashboardBillingsQuery);
+
+        $oneTimeTotalQuery = ProjectBilling::query()
+            ->join('project as p', 'project_billing.project_id', '=', 'p.project_id')
+            ->where('project_billing.kategori_layanan', 'OTM');
+        $applyJoinedProjectPeriod($oneTimeTotalQuery);
+
         return view('welcome', [
             'charges' => $charges,
             'dashboardRows' => $dashboardRows,
-            'dashboardTotalCount' => ProjectBilling::count(),
+            'dashboardTotalCount' => $dashboardBillingsQuery->count(),
             'page' => $page,
             'activeStatus' => $status,
             'activeService' => $service,
@@ -713,16 +636,14 @@ class ChargeController extends Controller
             'monthlyTotal' => $monthly->sum('nilai_bulan'),
             'monthlyCount' => $monthly->count(),
 
-            'oneTimeTotal' => ProjectBilling::join('project', 'project_billing.project_id', '=', 'project.project_id')
-                ->where('project_billing.kategori_layanan', 'OTM')
-                ->sum('project.nilai_kontrak'),
+            'oneTimeTotal' => $oneTimeTotalQuery->sum('p.nilai_kontrak'),
             'oneTimeCount' => $oneTime->count(),
 
             'dashboardTotals' => [
-                'projectTotal' => Project::count(),
-                'contractValueTotal' => Project::sum('nilai_kontrak'),
-                'doneCount' => ProjectBilling::where('status', 'Done')->count(),
-                'progressCount' => ProjectBilling::where('status', 'In Progress')->count(),
+                'projectTotal' => $dashboardProjectsQuery->count(),
+                'contractValueTotal' => $dashboardProjectsQuery->sum('nilai_kontrak'),
+                'doneCount' => (clone $dashboardBillingsQuery)->where('status', 'Done')->distinct('project_id')->count('project_id'),
+                'progressCount' => (clone $dashboardBillingsQuery)->where('status', 'In Progress')->distinct('project_id')->count('project_id'),
             ],
 
             'chartLabels' => $chartLabels,
