@@ -354,26 +354,17 @@
                 @else
                     <div class="content-grid">
                         <section class="form-panel charge-form-panel" aria-labelledby="form-title" data-charge-modal aria-hidden="true">
-                            <div class="modal-backdrop" data-close-charge-modal></div><div class="modal-card"><div class="section-heading"><div><span class="eyebrow">CATAT BIAYA</span><h2 id="form-title">Tambah pengeluaran</h2></div><button class="modal-close" type="button" data-close-charge-modal aria-label="Tutup form">&times;</button></div>
+                            <div class="modal-backdrop" data-close-charge-modal></div><div class="modal-card"><div class="section-heading"><div><span class="eyebrow">CATAT BIAYA</span><h2 id="form-title">Tambah Project</h2></div><button class="modal-close" type="button" data-close-charge-modal aria-label="Tutup form">&times;</button></div>
                             <form method="POST" action="{{ route('charges.store') }}" class="charge-form" enctype="multipart/form-data">
                                 @csrf
                                 <div class="field-group service-category-field">
                                     <label for="kategori_layanan">Kategori layanan <span>*</span></label>
                                     <select id="kategori_layanan" name="kategori_layanan" required data-service-category>
-                                        <option value="MS" @selected(old('kategori_layanan', $page === 'one_time' ? 'OTM' : 'MS') === 'MS')>Managed Service (MS)</option>
-                                        <option value="OTM" @selected(old('kategori_layanan', $page === 'one_time' ? 'OTM' : 'MS') === 'OTM')>One-Time Charge (OTM)</option>
+                                        <option value="MS" @selected(old('kategori_layanan', $page === 'one_time' ? 'OTM' : 'MS') === 'MS')>Managed Service</option>
+                                        <option value="OTM" @selected(old('kategori_layanan', $page === 'one_time' ? 'OTM' : 'MS') === 'OTM')>One-Time Charge</option>
                                     </select>
                                 </div>
-                                <div class="service-fields service-fields-ms" data-service-fields="MS">
-                                    <div class="form-row">
-                                        <div class="field-group"><label for="ms_no">MS No / Nomor MS <span>*</span></label><input id="ms_no" name="ms_no" value="{{ old('ms_no') }}" maxlength="80" data-required-ms></div>
-                                        <div class="field-group"><label for="pmo_id">PMO <span>*</span></label><select id="pmo_id" name="pmo_id" data-required-ms><option value="">Pilih PMO</option>@foreach ($pmoOptions as $pmo)<option value="{{ $pmo->employ_id }}" @selected(old('pmo_id') == $pmo->employ_id)>{{ $pmo->employ_name }}</option>@endforeach</select></div>
-                                    </div>
-                                    <div class="form-row">
-                                        <div class="field-group"><label for="nilai_bulan">Nilai Bulanan / BA <span>*</span></label><input id="nilai_bulan" name="nilai_bulan" type="number" min="0" value="{{ old('nilai_bulan') }}" data-required-ms></div>
-                                        <div class="field-group"><label for="priode_ms">Periode Tagihan (Bulan) <span>*</span></label><input id="priode_ms" name="priode" value="{{ old('priode') }}" maxlength="30" data-required-ms></div>
-                                    </div>
-                                </div>
+                                
                                 <div class="form-row">
                                     <div class="field-group"><label for="project_name">Project <span>*</span></label><input id="project_name" name="project_name" value="{{ old('project_name') }}" maxlength="120" required></div>
                                     <div class="field-group"><label for="user">USER <span>*</span></label><input id="user" name="user" value="{{ old('user') }}" maxlength="120" required></div>
@@ -382,16 +373,33 @@
                                     <div class="field-group"><label for="pm_id">PM <span>*</span></label><select id="pm_id" name="pm_id" required><option value="">Pilih PM</option>@foreach ($pmOptions as $pm)<option value="{{ $pm->employ_id }}" @selected(old('pm_id') == $pm->employ_id)>{{ $pm->employ_name }}</option>@endforeach</select></div>
                                     <div class="field-group"><label for="cost_center">Cost center <span>*</span></label><input id="cost_center" name="cost_center" value="{{ old('cost_center') }}" maxlength="80" required></div>
                                 </div>
+                                <div class="service-fields service-fields-ms" data-service-fields="MS">
+                                    <div class="form-row">
+                                        <div class="field-group"><label for="pmo_id">PMO <span>*</span></label><select id="pmo_id" name="pmo_id" data-required-ms><option value="">Pilih PMO</option>@foreach ($pmoOptions as $pmo)<option value="{{ $pmo->employ_id }}" @selected(old('pmo_id') == $pmo->employ_id)>{{ $pmo->employ_name }}</option>@endforeach</select></div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="field-group"><label for="nilai_bulan">Nilai Bulanan / BA <span>*</span></label><input id="nilai_bulan" name="nilai_bulan" type="number" min="0" value="{{ old('nilai_bulan') }}" data-required-ms></div>
+                                        {{-- Periode Tagihan --}}
+                                        <div class="field-group"><label for="priode_ms">Periode Tagihan (Bulan) <span>*</span></label><input id="priode_ms" name="priode" value="{{ old('priode') }}" type="date" data-required-ms></div>
+                                    </div>
+                                </div>
                                 <div class="form-row">
                                     <div class="field-group"><label for="no_kontrak">Kontrak / PO / JO <span>*</span></label><input id="no_kontrak" name="no_kontrak" value="{{ old('no_kontrak') }}" maxlength="120" required></div>
                                     <div class="field-group"><label for="nilai_kontrak">Nilai kontrak <span>*</span></label><input id="nilai_kontrak" name="nilai_kontrak" type="number" value="{{ old('nilai_kontrak') }}" min="0" required></div>
                                 </div>
                                 <div class="form-row">
                                     <div class="field-group"><label for="tgl_kontrak">Tanggal kontrak <span>*</span></label><input id="tgl_kontrak" name="tgl_kontrak" type="date" value="{{ old('tgl_kontrak') }}" required></div>
-                                    <div class="field-group service-fields service-fields-otm" data-service-fields="OTM"><label for="tipe_pengadaan">Type Pengadaan <span>*</span></label><input id="tipe_pengadaan" name="tipe_pengadaan" value="{{ old('tipe_pengadaan') }}" maxlength="80" data-required-otm></div>
+                                    {{-- input type pengadaan --}}
+                                    <div class="field-group service-fields service-fields-otm" data-service-fields="OTM"><label for="tipe_pengadaan">Type Pengadaan <span>*</span></label>
+                                        <select name="tipe_pengadaan" id="tipe_pengadaan" value="{{ old('tipe_pengadaan') }}" data-required-otm>
+                                            <option value="Pengadaan Baru">Pengadaan Baru</option>
+                                            <option value="Renewal">Renewal</option>
+                                        </select>
+                                    </div>
                                 </div>
                                 <div class="form-row">
-                                    <div class="field-group service-fields service-fields-otm" data-service-fields="OTM"><label for="priode_otm">Periode Pengadaan <span>*</span></label><input id="priode_otm" name="priode" value="{{ old('priode') }}" maxlength="30" data-required-otm></div>
+                                    {{-- priode pengadaan --}}
+                                    <div class="field-group service-fields service-fields-otm" data-service-fields="OTM"><label for="priode_otm">Periode Pengadaan <span>*</span></label><input id="priode_otm" name="priode" value="{{ old('priode') }}" type="date" data-required-otm></div>
                                     <div class="field-group service-fields service-fields-otm" data-service-fields="OTM"><label for="due_date_kontrak">Masa Kontrak Due Date <span>*</span></label><input id="due_date_kontrak" name="due_date_kontrak" type="date" value="{{ old('due_date_kontrak') }}" data-required-otm></div>
                                 </div>
                                 <div class="field-group"><label for="tgl_pembuatan_ba">Pembuatan BA, LHP</label><input id="tgl_pembuatan_ba" name="tgl_pembuatan_ba" type="date" value="{{ old('tgl_pembuatan_ba') }}"></div>

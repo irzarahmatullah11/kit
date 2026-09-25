@@ -202,14 +202,13 @@ class ChargeController extends Controller
             'user' => ['required', 'string', 'max:120'],
             'pm_id' => ['required', 'integer', 'exists:employ,employ_id'],
             'pmo_id' => ['nullable', 'integer', 'exists:employ,employ_id', 'required_if:kategori_layanan,MS'],
-            'ms_no' => ['nullable', 'string', 'max:80', 'required_if:kategori_layanan,MS'],
             'cost_center' => ['required', 'string', 'max:80'],
             'no_kontrak' => ['required', 'string', 'max:120'],
             'nilai_kontrak' => ['required', 'numeric', 'min:0'],
             'nilai_bulan' => ['nullable', 'numeric', 'min:0', 'required_if:kategori_layanan,MS'],
             'tgl_kontrak' => ['required', 'date'],
             'tipe_pengadaan' => ['nullable', 'string', 'max:80', 'required_if:kategori_layanan,OTM'],
-            'priode' => ['required', 'string', 'max:30'],
+            'priode' => ['required', 'date'],
             'due_date_kontrak' => ['nullable', 'date', 'required_if:kategori_layanan,OTM'],
             'tgl_pembuatan_ba' => ['nullable', 'date'],
             'tgl_paraf_pm' => ['nullable', 'date'],
@@ -247,12 +246,11 @@ class ChargeController extends Controller
 
             ProjectBilling::create([
                 'project_id' => $project->project_id,
-                'ms_no' => $data['ms_no'] ?? null,
                 'kategori_layanan' => $data['kategori_layanan'],
-                'tipe_pengadaan' => $data['tipe_pengadaan'],
+                'tipe_pengadaan' => $data['tipe_pengadaan'] ?? null,
                 'priode' => $data['priode'],
                 'nilai_bulan' => $data['nilai_bulan'] ?? null,
-                'due_date_kontrak' => $data['due_date_kontrak'],
+                'due_date_kontrak' => $data['due_date_kontrak'] ?? null,
                 'tgl_pembuatan_ba' => $data['tgl_pembuatan_ba'],
                 'tgl_paraf_pm' => $data['tgl_paraf_pm'],
                 'tgl_ttd_manager' => $data['tgl_ttd_manager'],
@@ -260,7 +258,6 @@ class ChargeController extends Controller
                 'tgl_permintaan_invoice' => $data['tgl_permintaan_invoice'],
                 'status' => $data['status'],
                 'note' => $data['note_1'] ?? null,
-                'note_1' => $data['note_1'] ?? null,
                 'file_kontrak' => $documentPaths['file_kontrak'] ?? null,
                 'file_ba' => $documentPaths['file_ba'] ?? null,
             ]);
@@ -279,21 +276,20 @@ class ChargeController extends Controller
             'user' => ['required', 'string', 'max:120'],
             'pm_id' => ['required', 'integer', 'exists:employ,employ_id'],
             'pmo_id' => ['nullable', 'integer', 'exists:employ,employ_id', 'required_if:kategori_layanan,MS'],
-            'ms_no' => ['nullable', 'string', 'max:80', 'required_if:kategori_layanan,MS'],
             'cost_center' => ['required', 'string', 'max:80'],
             'no_kontrak' => ['required', 'string', 'max:120'],
             'nilai_kontrak' => ['required', 'numeric', 'min:0'],
             'tgl_kontrak' => ['required', 'date'],
             'nilai_bulan' => ['nullable', 'numeric', 'min:0', 'required_if:kategori_layanan,MS'],
             'tipe_pengadaan' => ['nullable', 'string', 'max:80', 'required_if:kategori_layanan,OTM'],
-            'priode' => ['required', 'string', 'max:30'],
+            'priode' => ['required', 'date'],
             'due_date_kontrak' => ['nullable', 'date', 'required_if:kategori_layanan,OTM'],
             'tgl_pembuatan_ba' => ['nullable', 'date'],
             'tgl_paraf_pm' => ['nullable', 'date'],
             'tgl_ttd_manager' => ['nullable', 'date'],
             'tgl_submit_dokumen' => ['nullable', 'date'],
             'tgl_permintaan_invoice' => ['nullable', 'date'],
-            'note_1' => ['nullable', 'string', 'max:1000'],
+            'note' => ['nullable', 'string', 'max:1000'],
             'file_kontrak' => ['nullable', 'file', 'mimes:pdf', 'extensions:pdf', 'max:10240'],
             'file_ba' => ['nullable', 'file', 'mimes:pdf', 'extensions:pdf', 'max:10240'],
         ]);
@@ -328,7 +324,7 @@ class ChargeController extends Controller
             ->except(['project_name', 'user', 'cost_center', 'no_kontrak', 'nilai_kontrak', 'tgl_kontrak', 'pm_id', 'pmo_id', 'file_kontrak', 'file_ba'])
             ->all();
 
-        $billingData['note'] = $data['note_1'] ?? null;
+        $billingData['note'] = $data['note'] ?? null;
 
         foreach ($documentPaths as $field => $path) {
             $billingData[$field] = $path;
