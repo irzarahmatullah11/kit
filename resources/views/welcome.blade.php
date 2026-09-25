@@ -437,16 +437,161 @@
                             </form>
 
                             @if ($charges->count())
-                                <div class="history-table-wrap"><table class="history-table"><thead><tr><th>No.</th><th>PM</th><th>Project</th><th>USER</th><th>Type pengadaan</th><th>Cost center</th><th>Kontrak / PO / JO</th><th>Nilai kontrak<br>(nominal uang)</th><th>Periode pengadaan<br>(bulan)</th><th>Tanggal kontrak / PO / JO</th><th>Masa kontrak<br>Due Date</th><th>Status pembayaran</th><th>Aksi</th><th>Cetak file kontrak</th><th>Cetak file BA</th></tr></thead><tbody>@foreach ($charges as $index => $row)<tr data-hover-detail="{{ route('charges.show', $row) }}"><td>{{ $charges->firstItem() + $index }}</td><td>{{ $row->pm ?: '-' }}</td><td><strong>{{ $row->name }}</strong><span class="table-note">{{ $row->note ?: 'Tanpa catatan' }}</span></td><td>{{ $row->user_name ?: '-' }}</td><td>{{ $row->procurement_type }}</td><td>{{ $row->cost_center ?: '-' }}</td><td>{{ $row->contract_reference ?: '-' }}</td><td class="money-cell">Rp {{ number_format($row->amount, 0, ',', '.') }}</td><td>{{ $row->procurement_period }}</td><td>{{ $row->contract_date?->translatedFormat('d M Y') ?: '-' }}</td><td>{{ $row->due_date?->translatedFormat('d M Y') ?: '-' }}</td><td><button type="button" class="payment-status-button {{ $row->status === 'Done' ? 'status-done' : 'status-progress' }}">{{ $row->status === 'Done' ? 'Done' : 'On progress' }}</button></td><td><a class="edit-link" href="{{ route('charges.edit', $row) }}">Edit</a>
-                                    @if (auth()->user()?->isManager())
-                                        <form method="POST" action="{{ route('admin.charges.delete.selected') }}">
-                                            @csrf
-                                            @method('DELETE')
-                                            <input type="hidden" name="billing_id" value="{{ $row->billing_id }}">
-                                            <button type="submit" onclick="return confirm('Yakin ingin menghapus data ini?')" class="edit-link" style="background: none; border: none; padding: 0; color: var(--coral); cursor: pointer;">Hapus</button>
-                                        </form>
-                                    @endif
-                                </td><td>@if ($row->file_kontrak)<a class="edit-link" href="{{ route('charges.documents.print', [$row, 'document' => 'contract']) }}" target="_blank" rel="noopener">Cetak</a>@else<span>-</span>@endif</td><td>@if ($row->file_ba)<a class="edit-link" href="{{ route('charges.documents.print', [$row, 'document' => 'ba']) }}" target="_blank" rel="noopener">Cetak</a>@else<span>-</span>@endif</td></tr>@endforeach</tbody></table></div>
+                                @if ($page === 'one_time')
+                                    <div class="history-table-wrap">
+                                        <table class="history-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>No.</th>
+                                                    <th>PM</th>
+                                                    <th>USER</th>
+                                                    <th>Type Pengadaan</th>
+                                                    <th>Cost Center</th>
+                                                    <th>No. Kontrak / PO / JO</th>
+                                                    <th>Nilai Kontrak</th>
+                                                    <th>Periode Pengadaan</th>
+                                                    <th>Tanggal Kontrak / PO / JO</th>
+                                                    <th>Masa Kontrak (Due Date)</th>
+                                                    <th>Pembuatan BA, LHP</th>
+                                                    <th>Paraf PM</th>
+                                                    <th>TTD Manager</th>
+                                                    <th>Dokumen BA/LHP Dikirim ke User</th>
+                                                    <th>Permintaan Invoice Keuangan KIT</th>
+                                                    <th>Status</th>
+                                                    <th>Note</th>
+                                                    <th>Edit</th>
+                                                    <th>Cetak File Kontrak</th>
+                                                    <th>Cetak File BA</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach ($charges as $index => $row)
+                                                    <tr data-hover-detail="{{ route('charges.show', $row) }}">
+                                                        <td>{{ $charges->firstItem() + $index }}</td>
+                                                        <td>{{ $row->pm ?: '-' }}</td>
+                                                        <td>{{ $row->user_name ?: '-' }}</td>
+                                                        <td>{{ $row->procurement_type }}</td>
+                                                        <td>{{ $row->cost_center ?: '-' }}</td>
+                                                        <td>{{ $row->contract_reference ?: '-' }}</td>
+                                                        <td class="money-cell">Rp {{ number_format($row->amount, 0, ',', '.') }}</td>
+                                                        <td>{{ $row->procurement_period }}</td>
+                                                        <td>{{ $row->contract_date?->translatedFormat('d M Y') ?: '-' }}</td>
+                                                        <td>{{ $row->due_date?->translatedFormat('d M Y') ?: '-' }}</td>
+                                                        <td>{{ $row->tgl_pembuatan_ba?->translatedFormat('d M Y') ?: '-' }}</td>
+                                                        <td>{{ $row->tgl_paraf_pm?->translatedFormat('d M Y') ?: '-' }}</td>
+                                                        <td>{{ $row->tgl_ttd_manager?->translatedFormat('d M Y') ?: '-' }}</td>
+                                                        <td>{{ $row->tgl_submit_dokumen?->translatedFormat('d M Y') ?: '-' }}</td>
+                                                        <td>{{ $row->tgl_permintaan_invoice?->translatedFormat('d M Y') ?: '-' }}</td>
+                                                        <td>
+                                                            <button type="button" class="payment-status-button {{ $row->status === 'Done' ? 'status-done' : 'status-progress' }}">
+                                                                {{ $row->status === 'Done' ? 'Done' : 'On progress' }}
+                                                            </button>
+                                                        </td>
+                                                        <td>{{ $row->note ?: '-' }}</td>
+                                                        <td><a class="edit-link" href="{{ route('charges.edit', $row) }}">Edit</a></td>
+                                                        <td>
+                                                            @if ($row->file_kontrak)
+                                                                <a class="edit-link" href="{{ route('charges.documents.print', [$row, 'document' => 'contract']) }}" target="_blank" rel="noopener">Cetak</a>
+                                                            @else
+                                                                <span>-</span>
+                                                            @endif
+                                                        </td>
+                                                        <td>
+                                                            @if ($row->file_ba)
+                                                                <a class="edit-link" href="{{ route('charges.documents.print', [$row, 'document' => 'ba']) }}" target="_blank" rel="noopener">Cetak</a>
+                                                            @else
+                                                                <span>-</span>
+                                                            @endif
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @else
+                                    <div class="history-table-wrap">
+                                        <table class="history-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>No.</th>
+                                                    <th>Project</th>
+                                                    <th>User</th>
+                                                    <th>PM</th>
+                                                    <th>PMO</th>
+                                                    <th>Periode Tagihan</th>
+                                                    <th>Cost Center</th>
+                                                    <th>No. Kontrak / PO / JO</th>
+                                                    <th>Nilai Kontrak</th>
+                                                    <th>Nilai Bulanan / BA</th>
+                                                    <th>Tanggal Kontrak</th>
+                                                    <th>Pembuatan BA, LHP</th>
+                                                    <th>Paraf PM</th>
+                                                    <th>TTD Manager</th>
+                                                    <th>Tanggal Dokumen BA/LHP Dikirim ke User</th>
+                                                    <th>Permintaan Invoice Keuangan KIT</th>
+                                                    <th>Status</th>
+                                                    <th>Note</th>
+                                                    <th>Edit</th>
+                                                    <th>Cetak File Kontrak</th>
+                                                    <th>Cetak File BA</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach ($charges as $index => $row)
+                                                    <tr data-hover-detail="{{ route('charges.show', $row) }}">
+                                                        <td>{{ $charges->firstItem() + $index }}</td>
+                                                        <td>{{ $row->name }}</td>
+                                                        <td>{{ $row->user_name ?: '-' }}</td>
+                                                        <td>{{ $row->pm ?: '-' }}</td>
+                                                        <td>{{ $row->project?->pmo?->employ_name ?: '-' }}</td>
+                                                        <td>{{ $row->procurement_period }}</td>
+                                                        <td>{{ $row->cost_center ?: '-' }}</td>
+                                                        <td>{{ $row->contract_reference ?: '-' }}</td>
+                                                        <td class="money-cell">Rp {{ number_format($row->project?->nilai_kontrak ?? 0, 0, ',', '.') }}</td>
+                                                        <td class="money-cell">Rp {{ number_format($row->nilai_bulan ?? 0, 0, ',', '.') }}</td>
+                                                        <td>{{ $row->contract_date?->translatedFormat('d M Y') ?: '-' }}</td>
+                                                        <td>{{ $row->tgl_pembuatan_ba?->translatedFormat('d M Y') ?: '-' }}</td>
+                                                        <td>{{ $row->tgl_paraf_pm?->translatedFormat('d M Y') ?: '-' }}</td>
+                                                        <td>{{ $row->tgl_ttd_manager?->translatedFormat('d M Y') ?: '-' }}</td>
+                                                        <td>{{ $row->tgl_submit_dokumen?->translatedFormat('d M Y') ?: '-' }}</td>
+                                                        <td>{{ $row->tgl_permintaan_invoice?->translatedFormat('d M Y') ?: '-' }}</td>
+                                                        <td>
+                                                            <button type="button" class="payment-status-button {{ $row->status === 'Done' ? 'status-done' : 'status-progress' }}">
+                                                                {{ $row->status === 'Done' ? 'Done' : 'On progress' }}
+                                                            </button>
+                                                        </td>
+                                                        <td>{{ $row->note ?: '-' }}</td>
+                                                        <td>
+                                                            <a class="edit-link" href="{{ route('charges.edit', $row) }}">Edit</a>
+                                                            @if (auth()->user()?->isManager())
+                                                                <form method="POST" action="{{ route('admin.charges.delete.selected') }}">
+                                                                    @csrf
+                                                                    @method('DELETE')
+                                                                    <input type="hidden" name="billing_id" value="{{ $row->billing_id }}">
+                                                                    <button type="submit" onclick="return confirm('Yakin ingin menghapus data ini?')" class="edit-link" style="background: none; border: none; padding: 0; color: var(--coral); cursor: pointer;">Hapus</button>
+                                                                </form>
+                                                            @endif
+                                                        </td>
+                                                        <td>
+                                                            @if ($row->file_kontrak)
+                                                                <a class="edit-link" href="{{ route('charges.documents.print', [$row, 'document' => 'contract']) }}" target="_blank" rel="noopener">Cetak</a>
+                                                            @else
+                                                                <span>-</span>
+                                                            @endif
+                                                        </td>
+                                                        <td>
+                                                            @if ($row->file_ba)
+                                                                <a class="edit-link" href="{{ route('charges.documents.print', [$row, 'document' => 'ba']) }}" target="_blank" rel="noopener">Cetak</a>
+                                                            @else
+                                                                <span>-</span>
+                                                            @endif
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @endif
                             @else
                                 <div class="empty-state"><div class="empty-icon">+</div><h3>Belum ada pembayaran</h3><p>Belum ada data pada kategori ini.</p></div>
                             @endif
