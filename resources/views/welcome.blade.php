@@ -356,12 +356,12 @@
                                     <div class="field-group"><label for="user">USER <span>*</span></label><input id="user" name="user" value="{{ old('user') }}" maxlength="120" required></div>
                                 </div>
                                 <div class="form-row">
-                                    <div class="field-group"><label for="pm_id">PM <span>*</span></label><select id="pm_id" name="pm_id" required><option value="">Pilih PM</option>@foreach ($pmOptions as $pm)<option value="{{ $pm->employ_id }}" @selected(old('pm_id') == $pm->employ_id)>{{ $pm->employ_name }}</option>@endforeach</select></div>
+                                    <div class="field-group"><label for="pm">PM <span>*</span></label><select id="pm" name="pm" required><option value="">Pilih PM</option>@foreach ($pmOptions as $pm)<option value="{{ $pm->employ_name }}" @selected(old('pm') == $pm->employ_name)>{{ $pm->employ_name }}</option>@endforeach</select></div>
                                     <div class="field-group"><label for="cost_center">Cost center <span>*</span></label><input id="cost_center" name="cost_center" value="{{ old('cost_center') }}" maxlength="80" required></div>
                                 </div>
                                 <div class="service-fields service-fields-ms" data-service-fields="MS">
                                     <div class="form-row">
-                                        <div class="field-group"><label for="pmo_id">PMO <span>*</span></label><select id="pmo_id" name="pmo_id" data-required-ms><option value="">Pilih PMO</option>@foreach ($pmoOptions as $pmo)<option value="{{ $pmo->employ_id }}" @selected(old('pmo_id') == $pmo->employ_id)>{{ $pmo->employ_name }}</option>@endforeach</select></div>
+                                        <div class="field-group"><label for="pmo">PMO <span>*</span></label><select id="pmo" name="pmo" data-required-ms><option value="">Pilih PMO</option>@foreach ($pmoOptions as $pmo)<option value="{{ $pmo->employ_name }}" @selected(old('pmo') == $pmo->employ_name)>{{ $pmo->employ_name }}</option>@endforeach</select></div>
                                     </div>
                                     <div class="form-row">
                                         <div class="field-group"><label for="nilai_bulan">Nilai Bulanan / BA <span>*</span></label><input id="nilai_bulan" name="nilai_bulan" type="number" min="0" value="{{ old('nilai_bulan') }}" data-required-ms></div>
@@ -370,7 +370,7 @@
                                     </div>
                                 </div>
                                 <div class="form-row">
-                                    <div class="field-group"><label for="no_kontrak">Kontrak / PO / JO <span>*</span></label><input id="no_kontrak" name="no_kontrak" value="{{ old('no_kontrak') }}" maxlength="120" required></div>
+                                    <div class="field-group"><label for="no_kontrak">No Kontrak / PO / JO <span>*</span></label><input id="no_kontrak" name="no_kontrak" value="{{ old('no_kontrak') }}" maxlength="120" required></div>
                                     <div class="field-group"><label for="nilai_kontrak">Nilai kontrak <span>*</span></label><input id="nilai_kontrak" name="nilai_kontrak" type="number" value="{{ old('nilai_kontrak') }}" min="0" required></div>
                                 </div>
                                 <div class="form-row">
@@ -397,7 +397,7 @@
                                     <div class="field-group"><label for="tgl_submit_dokumen">Tanggal submit dokumen</label><input id="tgl_submit_dokumen" name="tgl_submit_dokumen" type="date" value="{{ old('tgl_submit_dokumen') }}"></div>
                                     <div class="field-group"><label for="tgl_permintaan_invoice">Tanggal permintaan invoice</label><input id="tgl_permintaan_invoice" name="tgl_permintaan_invoice" type="date" value="{{ old('tgl_permintaan_invoice') }}"></div>
                                 </div>
-                                <div class="field-group"><label for="note_1">Note 1 (Catatan / Informasi)</label><textarea id="note_1" name="note_1" rows="3" maxlength="1000">{{ old('note_1', old('note')) }}</textarea></div>
+                                <div class="field-group"><label for="note_1">Note (Catatan / Informasi)</label><textarea id="note_1" name="note_1" rows="3" maxlength="1000">{{ old('note_1', old('note')) }}</textarea></div>
                                 <div class="form-row">
                                     <div class="field-group"><label for="file_kontrak">File kontrak (PDF)</label><input id="file_kontrak" name="file_kontrak" type="file" accept="application/pdf,.pdf"><x-input-error :messages="$errors->get('file_kontrak')" /></div>
                                     <div class="field-group"><label for="file_ba">File BA (PDF)</label><input id="file_ba" name="file_ba" type="file" accept="application/pdf,.pdf"><x-input-error :messages="$errors->get('file_ba')" /></div>
@@ -454,7 +454,7 @@
                                                 @foreach ($charges as $index => $row)
                                                     <tr data-hover-detail="{{ route('charges.show', $row) }}">
                                                         <td>{{ $charges->firstItem() + $index }}</td>
-                                                        <td>{{ $row->pm ?: '-' }}</td>
+                                                        <td>{{ $row->project?->pm ?: '-' }}</td>
                                                         <td>{{ $row->user_name ?: '-' }}</td>
                                                         <td>{{ $row->procurement_type }}</td>
                                                         <td>{{ $row->cost_center ?: '-' }}</td>
@@ -474,7 +474,18 @@
                                                             </button>
                                                         </td>
                                                         <td>{{ $row->note ?: '-' }}</td>
-                                                        <td><a class="edit-link" href="{{ route('charges.edit', $row) }}">Edit</a></td>
+                                                        <td>
+                                                            <a class="edit-link" href="{{ route('charges.edit', $row) }}">Edit</a>
+                                                            @if (auth()->user()?->isManager())
+                                                                <form method="POST" action="{{ route('admin.charges.delete.selected') }}">
+                                                                    @csrf
+                                                                    @method('DELETE')
+                                                                    <input type="hidden" name="billing_id" value="{{ $row->billing_id }}">
+                                                                    <button type="submit" onclick="return confirm('Yakin ingin menghapus data ini?')" class="edit-link" style="background: none; border: none; padding: 0; color: var(--coral); cursor: pointer;">Hapus</button>
+                                                                </form>
+                                                            @endif
+                                                        </td>
+
                                                         <td>
                                                             @if ($row->file_kontrak)
                                                                 <a class="edit-link" href="{{ route('charges.documents.print', [$row, 'document' => 'contract']) }}" target="_blank" rel="noopener">Cetak</a>
@@ -528,8 +539,8 @@
                                                         <td>{{ $charges->firstItem() + $index }}</td>
                                                         <td>{{ $row->name }}</td>
                                                         <td>{{ $row->user_name ?: '-' }}</td>
-                                                        <td>{{ $row->pm ?: '-' }}</td>
-                                                        <td>{{ $row->project?->pmo?->employ_name ?: '-' }}</td>
+                                                        <td>{{ $row->project?->pm ?: '-' }}</td>
+                                                        <td>{{ $row->project?->pmo ?: '-' }}</td>
                                                         <td>{{ $row->procurement_period }}</td>
                                                         <td>{{ $row->cost_center ?: '-' }}</td>
                                                         <td>{{ $row->contract_reference ?: '-' }}</td>

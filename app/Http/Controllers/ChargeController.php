@@ -42,14 +42,14 @@ class ChargeController extends Controller
 
     public function show(ProjectBilling $charge): View
     {
-        $charge->load('project.pm');
+        $charge->load('project');
 
         return view('charges.show', compact('charge'));
     }
 
     public function print(ProjectBilling $charge): View
     {
-        $charge->load('project.pm');
+        $charge->load('project');
 
         return view('charges.print', compact('charge'));
     }
@@ -83,7 +83,7 @@ class ChargeController extends Controller
         $filters = $request->query('filters', []);
         $managedServicePeriod = trim((string) $request->query('ms_period', ''));
 
-        $rowsQuery = ProjectBilling::with('project.pm', 'project.pmo')->latest('billing_id');
+        $rowsQuery = ProjectBilling::with('project')->latest('billing_id');
 
         if (preg_match('/^\d{4}-\d{2}$/', $managedServicePeriod)) {
             $periodStart = Carbon::createFromFormat('Y-m', $managedServicePeriod)->startOfMonth();
@@ -113,10 +113,8 @@ class ChargeController extends Controller
                             ->orWhere('cost_center', 'like', "%{$search}%")
                             ->orWhere('no_kontrak', 'like', "%{$search}%")
                             ->orWhere('nilai_kontrak', 'like', "%{$search}%")
-                            ->orWhere('tgl_kontrak', 'like', "%{$search}%");
-                    })
-                    ->orWhereHas('project.pm', function ($pmQuery) use ($search) {
-                        $pmQuery->where('employ_name', 'like', "%{$search}%");
+                            ->orWhere('tgl_kontrak', 'like', "%{$search}%")
+                            ->orWhere('pm', 'like', "%{$search}%");
                     });
             });
         }
@@ -146,7 +144,7 @@ class ChargeController extends Controller
 
                 switch ($filterKey) {
                     case 'pm':
-                        $rowsQuery->whereHas('project.pm', fn ($q) => $q->whereIn('employ_name', $values));
+                        $rowsQuery->whereHas('project', fn ($q) => $q->whereIn('pm', $values));
                         break;
                     case 'project':
                         $rowsQuery->whereHas('project', fn ($q) => $q->whereIn('project_name', $values));
@@ -189,9 +187,9 @@ class ChargeController extends Controller
 
     public function edit(ProjectBilling $charge): View
     {
-        $charge->load('project.pm', 'project.pmo');
-        $pmOptions = Employ::where('role', 1)->orderBy('employ_name')->get(['employ_id', 'employ_name']);
-        $pmoOptions = Employ::where('role', 2)->orderBy('employ_name')->get(['employ_id', 'employ_name']);
+        $charge->load('project');
+        $pmOptions = Employ::where('role', 1)->orderBy('employ_name')->get(['employ_name']);
+        $pmoOptions = Employ::where('role', 2)->orderBy('employ_name')->get(['employ_name']);
 
         return view('charges.edit', compact('charge', 'pmOptions', 'pmoOptions'));
     }
@@ -222,8 +220,8 @@ class ChargeController extends Controller
             'kategori_layanan' => ['required', 'in:MS,OTM'],
             'project_name' => ['required', 'string', 'max:120'],
             'user' => ['required', 'string', 'max:120'],
-            'pm_id' => ['required', 'integer', 'exists:employ,employ_id'],
-            'pmo_id' => ['nullable', 'integer', 'exists:employ,employ_id', 'required_if:kategori_layanan,MS'],
+            'pm' => ['required', 'string'],
+            'pmo' => ['nullable', 'string', 'required_if:kategori_layanan,MS'],
             'cost_center' => ['required', 'string', 'max:80'],
             'no_kontrak' => ['required', 'string', 'max:120'],
             'nilai_kontrak' => ['required', 'numeric', 'min:0'],
@@ -262,8 +260,8 @@ class ChargeController extends Controller
                 'no_kontrak' => $data['no_kontrak'],
                 'nilai_kontrak' => $data['nilai_kontrak'],
                 'tgl_kontrak' => $data['tgl_kontrak'],
-                'pm_id' => $data['pm_id'],
-                'pmo_id' => $data['pmo_id'] ?? null,
+                'pm' => $data['pm'],
+                'pmo' => $data['pmo'] ?? null,
             ]);
 
             ProjectBilling::create([
@@ -296,8 +294,8 @@ class ChargeController extends Controller
             'kategori_layanan' => ['required', 'in:MS,OTM'],
             'project_name' => ['required', 'string', 'max:120'],
             'user' => ['required', 'string', 'max:120'],
-            'pm_id' => ['required', 'integer', 'exists:employ,employ_id'],
-            'pmo_id' => ['nullable', 'integer', 'exists:employ,employ_id', 'required_if:kategori_layanan,MS'],
+            'pm' => ['required', 'string'],
+            'pmo' => ['nullable', 'string', 'required_if:kategori_layanan,MS'],
             'cost_center' => ['required', 'string', 'max:80'],
             'no_kontrak' => ['required', 'string', 'max:120'],
             'nilai_kontrak' => ['required', 'numeric', 'min:0'],
@@ -335,15 +333,15 @@ class ChargeController extends Controller
             'no_kontrak' => $data['no_kontrak'],
             'nilai_kontrak' => $data['nilai_kontrak'],
             'tgl_kontrak' => $data['tgl_kontrak'],
-            'pm_id' => $data['pm_id'],
-            'pmo_id' => $data['pmo_id'] ?? null,
+            'pm' => $data['pm'],
+            'pmo' => $data['pmo'] ?? null,
         ]);
         $previousDocumentPaths = [
             'file_kontrak' => $charge->file_kontrak,
             'file_ba' => $charge->file_ba,
         ];
         $billingData = collect($data)
-            ->except(['project_name', 'user', 'cost_center', 'no_kontrak', 'nilai_kontrak', 'tgl_kontrak', 'pm_id', 'pmo_id', 'file_kontrak', 'file_ba'])
+            ->except(['project_name', 'user', 'cost_center', 'no_kontrak', 'nilai_kontrak', 'tgl_kontrak', 'pm', 'pmo', 'file_kontrak', 'file_ba'])
             ->all();
 
         $billingData['note'] = $data['note'] ?? null;
@@ -383,7 +381,7 @@ class ChargeController extends Controller
 
     private function page(string $page, $query, ?string $status = null, ?string $service = null, ?string $search = null, array $filters = [], ?string $managedServicePeriodInput = null): View
     {
-        $chargesQuery = $query->with('project.pm')->latest('billing_id');
+        $chargesQuery = $query->with('project')->latest('billing_id');
 
         $managedServicePeriod = trim((string) $managedServicePeriodInput);
         if (! preg_match('/^\d{4}-\d{2}$/', $managedServicePeriod)) {
@@ -424,10 +422,8 @@ class ChargeController extends Controller
                                 ->orWhere('cost_center', 'like', "%{$searchTerm}%")
                                 ->orWhere('no_kontrak', 'like', "%{$searchTerm}%")
                                 ->orWhere('nilai_kontrak', 'like', "%{$searchTerm}%")
-                                ->orWhere('tgl_kontrak', 'like', "%{$searchTerm}%");
-                        })
-                        ->orWhereHas('project.pm', function ($pmQuery) use ($searchTerm) {
-                            $pmQuery->where('employ_name', 'like', "%{$searchTerm}%");
+                                ->orWhere('tgl_kontrak', 'like', "%{$searchTerm}%")
+                                ->orWhere('pm', 'like', "%{$searchTerm}%");
                         });
                 });
             }
@@ -439,7 +435,7 @@ class ChargeController extends Controller
         $oneTime = ProjectBilling::where('kategori_layanan', 'OTM');
         $applyProjectPeriod($oneTime);
 
-        $dashboardRowsQuery = ProjectBilling::with('project.pm')->latest('billing_id');
+        $dashboardRowsQuery = ProjectBilling::with('project')->latest('billing_id');
         $applyProjectPeriod($dashboardRowsQuery);
 
         $normalizedFilters = [];
@@ -467,7 +463,7 @@ class ChargeController extends Controller
 
                 switch ($filterKey) {
                     case 'pm':
-                        $query->whereHas('project.pm', fn ($q) => $q->whereIn('employ_name', $values));
+                        $query->whereHas('project', fn ($q) => $q->whereIn('pm', $values));
                         break;
                     case 'project':
                         $query->whereHas('project', fn ($q) => $q->whereIn('project_name', $values));
@@ -518,7 +514,7 @@ class ChargeController extends Controller
         $dashboardRows = $dashboardRowsQuery->get();
 
         $filterOptions = [
-            'pm' => $dashboardRows->map(fn ($row) => $row->pm)->filter()->unique()->sort()->values()->all(),
+            'pm' => $dashboardRows->map(fn ($row) => $row->project?->pm)->filter()->unique()->sort()->values()->all(),
             'project' => $dashboardRows->map(fn ($row) => $row->name)->filter()->unique()->sort()->values()->all(),
             'user' => $dashboardRows->map(fn ($row) => $row->user_name)->filter()->unique()->sort()->values()->all(),
             'type' => $dashboardRows->map(fn ($row) => $row->kategori_layanan)->filter()->unique()->sort()->values()->all(),
@@ -534,12 +530,12 @@ class ChargeController extends Controller
         $pmOptions = Employ::query()
             ->where('role', 1)
             ->orderBy('employ_name')
-            ->get(['employ_id', 'employ_name']);
+            ->get(['employ_name']);
 
         $pmoOptions = Employ::query()
             ->where('role', 2)
             ->orderBy('employ_name')
-            ->get(['employ_id', 'employ_name']);
+            ->get(['employ_name']);
 
         $trendQuery = DB::table('project')
             ->selectRaw('DATE_FORMAT(tgl_kontrak, "%Y-%m") as month, SUM(nilai_kontrak) as total_biaya')
@@ -566,7 +562,7 @@ class ChargeController extends Controller
 
         $managedServiceRows = $dashboardRows
             ->filter(fn ($row) => in_array($row->kategori_layanan, ['MS', 'OTM'], true))
-            ->sortBy(fn ($row) => ($row->pm ?? 'Belum ditentukan').'|'.$row->name)
+            ->sortBy(fn ($row) => ($row->project?->pm ?? 'Belum ditentukan').'|'.$row->name)
             ->values();
 
         $managedServiceStatusCounts = $managedServiceRows
@@ -576,7 +572,7 @@ class ChargeController extends Controller
             ->sortKeys();
 
         $managedServicePmSummary = $managedServiceRows
-            ->groupBy(fn ($row) => $row->pm ?: 'Belum ditentukan')
+            ->groupBy(fn ($row) => $row->project?->pm ?: 'Belum ditentukan')
             ->map(function ($pmRows, $pmName) {
                 $projectStatus = function ($projectGroups) {
                     return $projectGroups->map(function ($projectRows) {
