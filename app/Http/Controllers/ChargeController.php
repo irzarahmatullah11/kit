@@ -22,7 +22,7 @@ class ChargeController extends Controller
         return $this->page(
             'dashboard',
             ProjectBilling::query(),
-            null,
+            $request->query('status'),
             $request->query('service'),
             $request->query('search'),
             $request->query('filters', []),
@@ -442,6 +442,67 @@ class ChargeController extends Controller
         $dashboardRowsQuery = ProjectBilling::with('project.pm')->latest('billing_id');
         $applyProjectPeriod($dashboardRowsQuery);
 
+        $normalizedFilters = [];
+        foreach ($filters as $key => $value) {
+            if (is_array($value)) {
+                $selectedValues = array_values(array_filter(array_map(fn ($item) => is_string($item) ? trim($item) : $item, $value), fn ($item) => $item !== '' && $item !== null));
+
+                if (! empty($selectedValues)) {
+                    $normalizedFilters[$key] = $selectedValues;
+                }
+
+                continue;
+            }
+
+            $trimmedValue = is_string($value) ? trim($value) : $value;
+
+            if ($trimmedValue !== '' && $trimmedValue !== null) {
+                $normalizedFilters[$key] = $trimmedValue;
+            }
+        }
+
+        $applyDashboardFilters = function ($query) use ($normalizedFilters): void {
+            foreach ($normalizedFilters as $filterKey => $filterValue) {
+                $values = is_array($filterValue) ? $filterValue : [$filterValue];
+
+                switch ($filterKey) {
+                    case 'pm':
+                        $query->whereHas('project.pm', fn ($q) => $q->whereIn('employ_name', $values));
+                        break;
+                    case 'project':
+                        $query->whereHas('project', fn ($q) => $q->whereIn('project_name', $values));
+                        break;
+                    case 'user':
+                        $query->whereHas('project', fn ($q) => $q->whereIn('user', $values));
+                        break;
+                    case 'type':
+                        $query->whereIn('kategori_layanan', $values);
+                        break;
+                    case 'cost_center':
+                        $query->whereHas('project', fn ($q) => $q->whereIn('cost_center', $values));
+                        break;
+                    case 'contract_reference':
+                        $query->whereHas('project', fn ($q) => $q->whereIn('no_kontrak', $values));
+                        break;
+                    case 'nilai_kontrak':
+                        $query->whereHas('project', fn ($q) => $q->whereIn('nilai_kontrak', $values));
+                        break;
+                    case 'periode':
+                        $query->whereIn('priode', $values);
+                        break;
+                    case 'contract_date':
+                        $query->whereHas('project', fn ($q) => $q->whereIn('tgl_kontrak', $values));
+                        break;
+                    case 'due_date':
+                        $query->whereIn('due_date_kontrak', $values);
+                        break;
+                    case 'status':
+                        $query->whereIn('status', $values);
+                        break;
+                }
+            }
+        };
+
         if ($page === 'dashboard') {
             if ($status) {
                 $dashboardRowsQuery->where('status', $status);
@@ -451,66 +512,7 @@ class ChargeController extends Controller
                 $dashboardRowsQuery->where('kategori_layanan', $service);
             }
 
-            $normalizedFilters = [];
-            foreach ($filters as $key => $value) {
-                if (is_array($value)) {
-                    $selectedValues = array_values(array_filter(array_map(fn ($item) => is_string($item) ? trim($item) : $item, $value), fn ($item) => $item !== '' && $item !== null));
-
-                    if (! empty($selectedValues)) {
-                        $normalizedFilters[$key] = $selectedValues;
-                    }
-
-                    continue;
-                }
-
-                $trimmedValue = is_string($value) ? trim($value) : $value;
-
-                if ($trimmedValue !== '' && $trimmedValue !== null) {
-                    $normalizedFilters[$key] = $trimmedValue;
-                }
-            }
-
-            if (! empty($normalizedFilters)) {
-                foreach ($normalizedFilters as $filterKey => $filterValue) {
-                    $values = is_array($filterValue) ? $filterValue : [$filterValue];
-
-                    switch ($filterKey) {
-                        case 'pm':
-                            $dashboardRowsQuery->whereHas('project.pm', fn ($q) => $q->whereIn('employ_name', $values));
-                            break;
-                        case 'project':
-                            $dashboardRowsQuery->whereHas('project', fn ($q) => $q->whereIn('project_name', $values));
-                            break;
-                        case 'user':
-                            $dashboardRowsQuery->whereHas('project', fn ($q) => $q->whereIn('user', $values));
-                            break;
-                        case 'type':
-                            $dashboardRowsQuery->whereIn('kategori_layanan', $values);
-                            break;
-                        case 'cost_center':
-                            $dashboardRowsQuery->whereHas('project', fn ($q) => $q->whereIn('cost_center', $values));
-                            break;
-                        case 'contract_reference':
-                            $dashboardRowsQuery->whereHas('project', fn ($q) => $q->whereIn('no_kontrak', $values));
-                            break;
-                        case 'nilai_kontrak':
-                            $dashboardRowsQuery->whereHas('project', fn ($q) => $q->whereIn('nilai_kontrak', $values));
-                            break;
-                        case 'periode':
-                            $dashboardRowsQuery->whereIn('priode', $values);
-                            break;
-                        case 'contract_date':
-                            $dashboardRowsQuery->whereHas('project', fn ($q) => $q->whereIn('tgl_kontrak', $values));
-                            break;
-                        case 'due_date':
-                            $dashboardRowsQuery->whereIn('due_date_kontrak', $values);
-                            break;
-                        case 'status':
-                            $dashboardRowsQuery->whereIn('status', $values);
-                            break;
-                    }
-                }
-            }
+            $applyDashboardFilters($dashboardRowsQuery);
         }
 
         $dashboardRows = $dashboardRowsQuery->get();
@@ -562,65 +564,46 @@ class ChargeController extends Controller
             ->pluck('period')
             ->values();
 
-        $managedServiceRowsQuery = DB::table('project_billing as pb')
-            ->join('project as p', 'p.project_id', '=', 'pb.project_id')
-            ->leftJoin('employ as e', 'e.employ_id', '=', 'p.pm_id')
-            ->where('pb.kategori_layanan', 'MS')
-            ->select([
-                'pb.project_id',
-                'pb.status',
-                'pb.note',
-                'pb.tgl_pembuatan_ba',
-                'pb.tgl_paraf_pm',
-                'pb.tgl_ttd_manager',
-                'pb.tgl_submit_dokumen',
-                'pb.tgl_permintaan_invoice',
-                'p.project_name',
-                'p.tgl_kontrak',
-                'e.employ_name as pm_name',
-            ]);
-
-        $applyJoinedProjectPeriod($managedServiceRowsQuery);
-
-        $managedServiceRows = $managedServiceRowsQuery
-            ->orderBy('e.employ_name')
-            ->orderBy('p.project_name')
-            ->get();
+        $managedServiceRows = $dashboardRows
+            ->filter(fn ($row) => in_array($row->kategori_layanan, ['MS', 'OTM'], true))
+            ->sortBy(fn ($row) => ($row->pm ?? 'Belum ditentukan').'|'.$row->name)
+            ->values();
 
         $managedServiceStatusCounts = $managedServiceRows
             ->groupBy('project_id')
-            ->map(fn ($projectRows) => $projectRows->contains(fn ($row) => strtolower((string) $row->status) === 'done') ? 'Done' : 'On Progress')
+            ->map(fn ($projectRows) => $projectRows->every(fn ($row) => strtolower((string) $row->status) === 'done') ? 'Done' : 'On Progress')
             ->countBy()
             ->sortKeys();
 
         $managedServicePmSummary = $managedServiceRows
-            ->groupBy(fn ($row) => $row->pm_name ?: 'Belum ditentukan')
+            ->groupBy(fn ($row) => $row->pm ?: 'Belum ditentukan')
             ->map(function ($pmRows, $pmName) {
-                $projectGroups = $pmRows->groupBy('project_id');
-                $projects = $projectGroups->map(function ($projectRows) {
-                    $row = $projectRows->first();
-                    $completedMilestones = collect([
-                        $row->tgl_pembuatan_ba,
-                        $row->tgl_paraf_pm,
-                        $row->tgl_ttd_manager,
-                        $row->tgl_submit_dokumen,
-                        $row->tgl_permintaan_invoice,
-                    ])->filter()->count();
+                $projectStatus = function ($projectGroups) {
+                    return $projectGroups->map(function ($projectRows) {
+                        $row = $projectRows->first();
 
-                    return [
-                        'name' => $row->project_name,
-                        'status' => strtolower((string) $row->status) === 'done' ? 'Done' : 'On Progress',
-                        'progress' => $completedMilestones * 20,
-                        'note' => trim((string) ($row->note ?? '')),
-                    ];
-                });
+                        return [
+                            'name' => $row->name,
+                            'status' => $projectRows->every(fn ($projectRow) => strtolower((string) $projectRow->status) === 'done') ? 'Done' : 'On Progress',
+                            'service' => $projectRows->pluck('kategori_layanan')->unique()->map(fn ($service) => $service === 'OTM' ? 'OTC' : 'MS')->implode('/'),
+                        ];
+                    });
+                };
+
+                $projects = $projectStatus($pmRows->groupBy('project_id'));
+                $otcProjects = $projectStatus($pmRows->where('kategori_layanan', 'OTM')->groupBy('project_id'));
+                $managedServiceProjects = $projectStatus($pmRows->where('kategori_layanan', 'MS')->groupBy('project_id'));
+
+                $progressPercentage = function ($projects): float {
+                    return round($projects->where('status', 'Done')->count() / max($projects->count(), 1) * 100, 1);
+                };
 
                 return [
                     'pm' => $pmName,
                     'total_projects' => $projects->count(),
-                    'progress_ba' => round($projects->avg('progress') ?? 0, 1),
-                    'on_progress_projects' => $projects->where('status', 'On Progress')->pluck('name')->filter()->values()->all(),
-                    'information' => $projects->pluck('note')->filter()->unique()->values()->all(),
+                    'progress_otc' => $progressPercentage($otcProjects),
+                    'progress_ms' => $progressPercentage($managedServiceProjects),
+                    'on_progress_projects' => $projects->where('status', 'On Progress')->filter(fn ($project) => filled($project['name']))->unique('name')->values()->all(),
                 ];
             })
             ->sortBy('pm')

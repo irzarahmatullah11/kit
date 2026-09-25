@@ -140,15 +140,15 @@
                             <span class="summary-caption">masih berjalan</span>
                         </div>
                         <a href="{{ route('dashboard') }}" class="summary-card summary-card-note status-filter-card {{ !$activeStatus ? 'is-active' : '' }}">
-                            <span class="summary-label">Total catatan</span>
+                            <span class="summary-label">Total Project</span>
                             <strong>{{ $dashboardTotalCount }}</strong>
-                            <span class="summary-caption">{{ $activeStatus ? 'filter aktif: ' . $activeStatus : 'semua baris matrix' }}</span>
+                            <span class="summary-caption">{{ $activeStatus ? 'filter aktif: ' . $activeStatus : '' }}</span>
                         </a>
                     </section>
                     <section class="managed-service-section" aria-labelledby="managed-service-title">
                         <div class="section-heading managed-service-heading">
                             <div>
-                                <span class="eyebrow">MANAGED SERVICES / SEWA</span>
+                                <span class="eyebrow">MANAGED SERVICES + ONE TIME CHARGE</span>
                                 <h2 id="managed-service-title">Informasi progress operasional</h2>
                             </div>
                         </div>
@@ -158,14 +158,14 @@
                                 <div class="managed-service-card-heading">
                                     <div>
                                         <span class="eyebrow">STATUS PROJECT</span>
-                                        <h3>Komposisi Status Managed Service</h3>
+                                        <h3>Komposisi Status Project</h3>
                                     </div>
                                 </div>
                                 <div class="managed-service-donut-wrap">
                                     @if (($managedServiceStatusCounts ?? collect())->sum() > 0)
                                         <canvas id="managedServiceStatusChart"></canvas>
                                     @else
-                                        <div class="managed-service-empty">Belum ada data Managed Service pada periode ini.</div>
+                                        <div class="managed-service-empty">Belum ada data project pada periode ini.</div>
                                     @endif
                                 </div>
                             </article>
@@ -185,9 +185,9 @@
                                                 <tr>
                                                     <th>PM</th>
                                                     <th>Total Project</th>
-                                                    <th>Progress BA</th>
-                                                    <th>MS On Progress</th>
-                                                    <th>Information</th>
+                                                    <th>Progress BA/OTC</th>
+                                                    <th>Progress BA/MS</th>
+                                                    <th>MS/OTC On Progress</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -197,22 +197,21 @@
                                                         <td>{{ $summary['total_projects'] }}</td>
                                                         <td>
                                                             <div class="managed-service-progress">
-                                                                <span>{{ number_format($summary['progress_ba'], 1, ',', '.') }}%</span>
-                                                                <span class="managed-service-progress-track"><span style="width: {{ min(100, max(0, $summary['progress_ba'])) }}%"></span></span>
+                                                                <span>{{ number_format($summary['progress_otc'], 1, ',', '.') }}%</span>
+                                                                <span class="managed-service-progress-track"><span style="width: {{ min(100, max(0, $summary['progress_otc'])) }}%"></span></span>
                                                             </div>
                                                         </td>
                                                         <td>
-                                                            @forelse ($summary['on_progress_projects'] as $projectName)
-                                                                <span class="managed-service-project">{{ $projectName }}</span>
-                                                            @empty
-                                                                <span class="managed-service-muted">Tidak ada</span>
-                                                            @endforelse
+                                                            <div class="managed-service-progress">
+                                                                <span>{{ number_format($summary['progress_ms'], 1, ',', '.') }}%</span>
+                                                                <span class="managed-service-progress-track"><span style="width: {{ min(100, max(0, $summary['progress_ms'])) }}%"></span></span>
+                                                            </div>
                                                         </td>
                                                         <td>
-                                                            @forelse ($summary['information'] as $information)
-                                                                <span class="managed-service-note">{{ $information }}</span>
+                                                            @forelse ($summary['on_progress_projects'] as $project)
+                                                                <span class="managed-service-project">{{ $project['name'] }} ({{ $project['service'] }})</span>
                                                             @empty
-                                                                <span class="managed-service-muted">Belum ada catatan</span>
+                                                                <span class="managed-service-muted">Tidak ada</span>
                                                             @endforelse
                                                         </td>
                                                     </tr>
@@ -273,20 +272,7 @@
                             });
                         </script>
                     @endif
-                    <section class="trend-section" aria-labelledby="trend-chart-title">
-                        <div class="trend-card">
-                            <div class="trend-heading">
-                                <div>
-                                    <span class="eyebrow">FINANCIAL MOMENTUM</span>
-                                    <h2 id="trend-chart-title">Trend Realisasi Biaya per Bulan</h2>
-                                </div>
-                                <span class="record-count">{{ $managedServicePeriod ? 'Periode terpilih' : 'Seluruh periode' }}</span>
-                            </div>
-                            <div class="trend-chart-wrap">
-                                <canvas id="trendChart"></canvas>
-                            </div>
-                        </div>
-                    </section>
+                   
                     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
                     <script>
                         document.addEventListener('DOMContentLoaded', function () {
