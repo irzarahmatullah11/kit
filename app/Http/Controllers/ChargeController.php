@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ChargeController extends Controller
 {
@@ -51,6 +52,27 @@ class ChargeController extends Controller
         $charge->load('project.pm');
 
         return view('charges.print', compact('charge'));
+    }
+
+    public function printDocument(ProjectBilling $charge, string $document): BinaryFileResponse
+    {
+        $documentFields = [
+            'contract' => 'file_kontrak',
+            'ba' => 'file_ba',
+        ];
+        $field = $documentFields[$document] ?? null;
+
+        abort_if($field === null || blank($charge->{$field}), 404);
+
+        $disk = Storage::disk('public');
+        $path = $charge->{$field};
+
+        abort_unless($disk->exists($path), 404);
+
+        return response()->file($disk->path($path), [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.basename($path).'"',
+        ]);
     }
 
     public function exportCsv(Request $request)
