@@ -17,17 +17,19 @@
                 </div>
                 
                 <div class="form-row"><div class="field-group"><label>Project</label><input name="project_name" value="{{ old('project_name', $charge->project?->project_name) }}" required></div><div class="field-group"><label>USER</label><input name="user" value="{{ old('user', $charge->project?->user) }}" required></div></div>
-                <div class="form-row"><div class="field-group"><label>PM</label><select name="pm_id" required><option value="">Pilih PM</option>@foreach ($pmOptions as $pm)<option value="{{ $pm->employ_id }}" @selected(old('pm_id', $charge->project?->pm_id) == $pm->employ_id)>{{ $pm->employ_name }}</option>@endforeach</select></div><div class="field-group"><label>Cost center</label><input name="cost_center" value="{{ old('cost_center', $charge->project?->cost_center) }}" required></div></div>
+                <div class="form-row"><div class="field-group"><label>PM</label><select name="pm" required><option value="">Pilih PM</option>@if($charge->project?->pm && !$pmOptions->contains('employ_name', $charge->project?->pm))<option value="{{ $charge->project?->pm }}" selected>{{ $charge->project?->pm }}</option>@endif
+@foreach ($pmOptions as $pm)<option value="{{ $pm->employ_name }}" @selected(old('pm', $charge->project?->pm) == $pm->employ_name)>{{ $pm->employ_name }}</option>@endforeach</select></div><div class="field-group"><label>Cost center</label><input name="cost_center" value="{{ old('cost_center', $charge->project?->cost_center) }}" required></div></div>
                 <div class="service-fields service-fields-ms" data-service-fields="MS">
                     <div class="form-row">
-                        <div class="field-group"><label>PMO <span>*</span></label><select name="pmo_id" data-required-ms><option value="">Pilih PMO</option>@foreach ($pmoOptions as $pmo)<option value="{{ $pmo->employ_id }}" @selected(old('pmo_id', $charge->project?->pmo_id) == $pmo->employ_id)>{{ $pmo->employ_name }}</option>@endforeach</select></div>
+                        <div class="field-group"><label>PMO <span>*</span></label><select name="pmo" data-required-ms><option value="">Pilih PMO</option>@if($charge->project?->pmo && !$pmoOptions->contains('employ_name', $charge->project?->pmo))<option value="{{ $charge->project?->pmo }}" selected>{{ $charge->project?->pmo }}</option>@endif
+@foreach ($pmoOptions as $pmo)<option value="{{ $pmo->employ_name }}" @selected(old('pmo', $charge->project?->pmo) == $pmo->employ_name)>{{ $pmo->employ_name }}</option>@endforeach</select></div>
                     </div>
                     <div class="form-row">
                         <div class="field-group"><label>Nilai Bulanan / BA <span>*</span></label><input type="number" name="nilai_bulan" value="{{ old('nilai_bulan', $charge->nilai_bulan) }}" min="0" data-required-ms></div>
                         <div class="field-group"><label>Periode Tagihan (Bulan) <span>*</span></label><input name="priode" type="date" value="{{ old('priode', $charge->priode) }}" data-required-ms></div>
                     </div>
                 </div>
-                <div class="form-row"><div class="field-group"><label>Kontrak / PO / JO</label><input name="no_kontrak" value="{{ old('no_kontrak', $charge->project?->no_kontrak) }}" required></div><div class="field-group"><label>Nilai kontrak</label><input type="number" name="nilai_kontrak" value="{{ old('nilai_kontrak', $charge->project?->nilai_kontrak) }}" min="0" required></div></div>
+                <div class="form-row"><div class="field-group"><label>No Kontrak / PO / JO</label><input name="no_kontrak" value="{{ old('no_kontrak', $charge->project?->no_kontrak) }}" required></div><div class="field-group"><label>Nilai kontrak</label><input type="number" name="nilai_kontrak" value="{{ old('nilai_kontrak', $charge->project?->nilai_kontrak) }}" min="0" required></div></div>
                 <div class="form-row"><div class="field-group"><label>Tanggal kontrak</label><input type="date" name="tgl_kontrak" value="{{ old('tgl_kontrak', $charge->project?->tgl_kontrak?->format('Y-m-d')) }}" required></div><div class="field-group service-fields service-fields-otm" data-service-fields="OTM"><label>Type Pengadaan <span>*</span></label>
                     <select name="tipe_pengadaan" id="tipe_pengadaan" data-required-otm>
                         <option value="Pengadaan Baru" @selected(old('tipe_pengadaan', $charge->tipe_pengadaan) === 'Pengadaan Baru')>Pengadaan Baru</option>

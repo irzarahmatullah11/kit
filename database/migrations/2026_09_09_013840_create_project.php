@@ -19,13 +19,9 @@ return new class extends Migration
             $table->string('no_kontrak');
             $table->decimal('nilai_kontrak', 15, 2);
             $table->date('tgl_kontrak');
-            $table->unsignedInteger('pm_id');
-            $table->unsignedInteger('pmo_id')->nullable();
+            $table->string('pm');
+            $table->string('pmo')->nullable();
             $table->timestamps();
-
-            // relasi
-            $table->foreign('pm_id')->references('employ_id')->on('employ')->cascadeOnDelete();
-            $table->foreign('pmo_id')->references('employ_id')->on('employ')->cascadeOnDelete();
         });
     }
 

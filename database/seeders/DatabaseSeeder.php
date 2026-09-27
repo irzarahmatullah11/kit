@@ -11,7 +11,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Insert Data Role[cite: 2]
+        // 1. Insert Data Role
         $roles = [
             ['role_name' => 'pm'],
             ['role_name' => 'pmo'],
@@ -21,53 +21,53 @@ class DatabaseSeeder extends Seeder
             DB::table('role')->insert($role);
         }
 
-        // 2. Insert Data Employee[cite: 1]
+        // 2. Insert Data Employee
         $employees = [
             // PM (Role ID = 1)
-            ['employ_name' => 'Mr A', 'email' => 'mra@example.com', 'password' => Hash::make('password123'), 'role' => 1],
-            ['employ_name' => 'Mr B', 'email' => 'mrb@example.com', 'password' => Hash::make('password123'), 'role' => 1],
-            ['employ_name' => 'Mr C', 'email' => 'mrc@example.com', 'password' => Hash::make('password123'), 'role' => 1],
+            ['employ_name' => 'Mr A', 'email' => 'mra@example.com', 'password' => Hash::make('password123'), 'role' => 1], // ID 1
+            ['employ_name' => 'Mr B', 'email' => 'mrb@example.com', 'password' => Hash::make('password123'), 'role' => 1], // ID 2
+            ['employ_name' => 'Mr C', 'email' => 'mrc@example.com', 'password' => Hash::make('password123'), 'role' => 1], // ID 3
 
             // PMO (Role ID = 2)
-            ['employ_name' => 'Ms A', 'email' => 'msa@example.com', 'password' => Hash::make('password123'), 'role' => 2],
-            ['employ_name' => 'Ms B', 'email' => 'msb@example.com', 'password' => Hash::make('password123'), 'role' => 2],
-            ['employ_name' => 'Ms C', 'email' => 'msc@example.com', 'password' => Hash::make('password123'), 'role' => 2],
+            ['employ_name' => 'Ms A', 'email' => 'msa@example.com', 'password' => Hash::make('password123'), 'role' => 2], // ID 4
+            ['employ_name' => 'Ms B', 'email' => 'msb@example.com', 'password' => Hash::make('password123'), 'role' => 2], // ID 5
+            ['employ_name' => 'Ms C', 'email' => 'msc@example.com', 'password' => Hash::make('password123'), 'role' => 2], // ID 6
 
             // Manager (Role ID = 3)
-            ['employ_name' => 'Manager 1', 'email' => 'manager@example.com', 'password' => Hash::make('password123'), 'role' => 3],
+            ['employ_name' => 'Manager 1', 'email' => 'manager@example.com', 'password' => Hash::make('password123'), 'role' => 3], // ID 7
         ];
         foreach ($employees as $employ) {
             DB::table('employ')->insert($employ);
         }
 
-        // 3. Insert Data Project[cite: 3]
+        // 3. Insert Data Project (Diubah pm_id -> PM, pmo_id -> PMO berisi employ_name)
         $projects = [
             // PROJECT DENGAN LAYANAN MS (Memiliki PMO)
-            ['project_name' => 'Project ABC', 'user' => 'PT ABC', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/XXX', 'nilai_kontrak' => 1478849641.00, 'tgl_kontrak' => '2026-03-01', 'pm_id' => 1, 'pmo_id' => 4, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['project_name' => 'Project DEF', 'user' => 'PT DEF', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/XXX', 'nilai_kontrak' => 3948730168.00, 'tgl_kontrak' => '2026-04-01', 'pm_id' => 2, 'pmo_id' => 5, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['project_name' => 'Project STU', 'user' => 'PT XYZ', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/007', 'nilai_kontrak' => 1500000000.00, 'tgl_kontrak' => '2026-06-01', 'pm_id' => 1, 'pmo_id' => 4, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['project_name' => 'Project VWX', 'user' => 'PT LMN', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/008', 'nilai_kontrak' => 2100000000.00, 'tgl_kontrak' => '2026-06-15', 'pm_id' => 2, 'pmo_id' => 5, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['project_name' => 'Project YZA', 'user' => 'PT OPQ', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/009', 'nilai_kontrak' => 1750000000.00, 'tgl_kontrak' => '2026-07-01', 'pm_id' => 3, 'pmo_id' => 6, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['project_name' => 'Project BCD', 'user' => 'PT RST', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/010', 'nilai_kontrak' => 3200000000.00, 'tgl_kontrak' => '2026-07-10', 'pm_id' => 1, 'pmo_id' => 4, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['project_name' => 'Project EFG', 'user' => 'PT UVW', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/011', 'nilai_kontrak' => 1800500000.00, 'tgl_kontrak' => '2026-08-05', 'pm_id' => 2, 'pmo_id' => 5, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['project_name' => 'Project ABC', 'user' => 'PT ABC', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/XXX', 'nilai_kontrak' => 1478849641.00, 'tgl_kontrak' => '2026-03-01', 'PM' => 'Mr A', 'PMO' => 'Ms A', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['project_name' => 'Project DEF', 'user' => 'PT DEF', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/XXX', 'nilai_kontrak' => 3948730168.00, 'tgl_kontrak' => '2026-04-01', 'PM' => 'Mr B', 'PMO' => 'Ms B', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['project_name' => 'Project STU', 'user' => 'PT XYZ', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/007', 'nilai_kontrak' => 1500000000.00, 'tgl_kontrak' => '2026-06-01', 'PM' => 'Mr A', 'PMO' => 'Ms A', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['project_name' => 'Project VWX', 'user' => 'PT LMN', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/008', 'nilai_kontrak' => 2100000000.00, 'tgl_kontrak' => '2026-06-15', 'PM' => 'Mr B', 'PMO' => 'Ms B', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['project_name' => 'Project YZA', 'user' => 'PT OPQ', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/009', 'nilai_kontrak' => 1750000000.00, 'tgl_kontrak' => '2026-07-01', 'PM' => 'Mr C', 'PMO' => 'Ms C', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['project_name' => 'Project BCD', 'user' => 'PT RST', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/010', 'nilai_kontrak' => 3200000000.00, 'tgl_kontrak' => '2026-07-10', 'PM' => 'Mr A', 'PMO' => 'Ms A', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['project_name' => 'Project EFG', 'user' => 'PT UVW', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/011', 'nilai_kontrak' => 1800500000.00, 'tgl_kontrak' => '2026-08-05', 'PM' => 'Mr B', 'PMO' => 'Ms B', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
 
             // PROJECT DENGAN LAYANAN ONE TIME CHARGE (PMO di-set null)
-            ['project_name' => 'Project HIJ', 'user' => 'PT XYZ', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/012', 'nilai_kontrak' => 2950000000.00, 'tgl_kontrak' => '2026-08-20', 'pm_id' => 3, 'pmo_id' => null, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['project_name' => 'Project KLM', 'user' => 'PT LMN', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/013', 'nilai_kontrak' => 4100000000.00, 'tgl_kontrak' => '2026-09-01', 'pm_id' => 1, 'pmo_id' => null, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['project_name' => 'Project NOP', 'user' => 'PT OPQ', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/014', 'nilai_kontrak' => 1250000000.00, 'tgl_kontrak' => '2026-09-15', 'pm_id' => 2, 'pmo_id' => null, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['project_name' => 'Project QRS', 'user' => 'PT RST', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/015', 'nilai_kontrak' => 3400000000.00, 'tgl_kontrak' => '2026-10-01', 'pm_id' => 3, 'pmo_id' => null, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['project_name' => 'Project TUV', 'user' => 'PT UVW', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/016', 'nilai_kontrak' => 2200000000.00, 'tgl_kontrak' => '2026-10-10', 'pm_id' => 1, 'pmo_id' => null, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['project_name' => 'Project WXY', 'user' => 'PT XYZ', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/017', 'nilai_kontrak' => 5100000000.00, 'tgl_kontrak' => '2026-11-05', 'pm_id' => 2, 'pmo_id' => null, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['project_name' => 'Project ZAB', 'user' => 'PT LMN', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/018', 'nilai_kontrak' => 1150000000.00, 'tgl_kontrak' => '2026-11-20', 'pm_id' => 3, 'pmo_id' => null, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['project_name' => 'Project CDE', 'user' => 'PT OPQ', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/019', 'nilai_kontrak' => 2800000000.00, 'tgl_kontrak' => '2026-12-01', 'pm_id' => 1, 'pmo_id' => null, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['project_name' => 'Project FGH', 'user' => 'PT RST', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/020', 'nilai_kontrak' => 1950000000.00, 'tgl_kontrak' => '2026-12-10', 'pm_id' => 2, 'pmo_id' => null, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['project_name' => 'Project IJK', 'user' => 'PT UVW', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/021', 'nilai_kontrak' => 3600000000.00, 'tgl_kontrak' => '2026-12-20', 'pm_id' => 3, 'pmo_id' => null, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['project_name' => 'Project HIJ', 'user' => 'PT XYZ', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/012', 'nilai_kontrak' => 2950000000.00, 'tgl_kontrak' => '2026-08-20', 'PM' => 'Mr C', 'PMO' => null, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['project_name' => 'Project KLM', 'user' => 'PT LMN', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/013', 'nilai_kontrak' => 4100000000.00, 'tgl_kontrak' => '2026-09-01', 'PM' => 'Mr A', 'PMO' => null, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['project_name' => 'Project NOP', 'user' => 'PT OPQ', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/014', 'nilai_kontrak' => 1250000000.00, 'tgl_kontrak' => '2026-09-15', 'PM' => 'Mr B', 'PMO' => null, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['project_name' => 'Project QRS', 'user' => 'PT RST', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/015', 'nilai_kontrak' => 3400000000.00, 'tgl_kontrak' => '2026-10-01', 'PM' => 'Mr C', 'PMO' => null, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['project_name' => 'Project TUV', 'user' => 'PT UVW', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/016', 'nilai_kontrak' => 2200000000.00, 'tgl_kontrak' => '2026-10-10', 'PM' => 'Mr A', 'PMO' => null, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['project_name' => 'Project WXY', 'user' => 'PT XYZ', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/017', 'nilai_kontrak' => 5100000000.00, 'tgl_kontrak' => '2026-11-05', 'PM' => 'Mr B', 'PMO' => null, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['project_name' => 'Project ZAB', 'user' => 'PT LMN', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/018', 'nilai_kontrak' => 1150000000.00, 'tgl_kontrak' => '2026-11-20', 'PM' => 'Mr C', 'PMO' => null, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['project_name' => 'Project CDE', 'user' => 'PT OPQ', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/019', 'nilai_kontrak' => 2800000000.00, 'tgl_kontrak' => '2026-12-01', 'PM' => 'Mr A', 'PMO' => null, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['project_name' => 'Project FGH', 'user' => 'PT RST', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/020', 'nilai_kontrak' => 1950000000.00, 'tgl_kontrak' => '2026-12-10', 'PM' => 'Mr B', 'PMO' => null, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['project_name' => 'Project IJK', 'user' => 'PT UVW', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/XXX/021', 'nilai_kontrak' => 3600000000.00, 'tgl_kontrak' => '2026-12-20', 'PM' => 'Mr C', 'PMO' => null, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
         ];
         foreach ($projects as $project) {
             DB::table('project')->insert($project);
         }
 
-        // 4. Insert Data Project Billing
+        // 4. Insert Data Project Billing (Tidak ada perubahan, ID project tetap berelasi)
         $billings = [
             // --- BILLING MS ---
             ['project_id' => 1, 'kategori_layanan' => 'MS', 'tipe_pengadaan' => null, 'priode' => '2026-06-01', 'nilai_bulan' => 270006425.00, 'due_date_kontrak' => null, 'tgl_pembuatan_ba' => '2026-03-01', 'tgl_paraf_pm' => '2026-03-01', 'tgl_ttd_manager' => '2026-03-01', 'tgl_submit_dokumen' => '2026-03-01', 'tgl_permintaan_invoice' => '2026-03-01', 'status' => 'Done', 'note' => null],
