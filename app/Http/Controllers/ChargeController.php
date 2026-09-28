@@ -26,7 +26,9 @@ class ChargeController extends Controller
             $request->query('service'),
             $request->query('search'),
             $request->query('filters', []),
-            $request->query('ms_period')
+            $request->query('ms_period'),
+            $request->query('ms_year'),
+            $request->query('ms_month')
         );
     }
 
@@ -81,14 +83,22 @@ class ChargeController extends Controller
         $service = $request->query('service');
         $search = trim((string) $request->query('search', ''));
         $filters = $request->query('filters', []);
-        $managedServicePeriod = trim((string) $request->query('ms_period', ''));
+        $periodSelection = $this->normalizePeriodSelection(
+            $request->query('ms_period'),
+            $request->query('ms_year'),
+            $request->query('ms_month')
+        );
+        $periodYear = $periodSelection['year'];
+        $periodMonth = $periodSelection['month'] !== '' ? (int) $periodSelection['month'] : null;
 
         $rowsQuery = ProjectBilling::with('project')->latest('billing_id');
 
-        if (preg_match('/^\d{4}-\d{2}$/', $managedServicePeriod)) {
-            $periodStart = Carbon::createFromFormat('Y-m', $managedServicePeriod)->startOfMonth();
-            $periodEnd = $periodStart->copy()->endOfMonth();
+        if ($periodYear !== '') {
+            $periodStart = Carbon::create((int) $periodYear, $periodMonth ?? 1, 1)->startOfDay();
+            $periodEnd = $periodMonth !== null ? $periodStart->copy()->endOfMonth() : $periodStart->copy()->endOfYear();
             $rowsQuery->whereHas('project', fn ($projectQuery) => $projectQuery->whereBetween('tgl_kontrak', [$periodStart, $periodEnd]));
+        } elseif ($periodMonth !== null) {
+            $rowsQuery->whereHas('project', fn ($projectQuery) => $projectQuery->whereMonth('tgl_kontrak', $periodMonth));
         }
 
         if ($status) {
@@ -379,29 +389,34 @@ class ChargeController extends Controller
         return $paths;
     }
 
-    private function page(string $page, $query, ?string $status = null, ?string $service = null, ?string $search = null, array $filters = [], ?string $managedServicePeriodInput = null): View
+    private function page(string $page, $query, ?string $status = null, ?string $service = null, ?string $search = null, array $filters = [], mixed $managedServicePeriodInput = null, mixed $managedServiceYearInput = null, mixed $managedServiceMonthInput = null): View
     {
         $chargesQuery = $query->with('project')->latest('billing_id');
 
-        $managedServicePeriod = trim((string) $managedServicePeriodInput);
-        if (! preg_match('/^\d{4}-\d{2}$/', $managedServicePeriod)) {
-            $managedServicePeriod = '';
-        }
-
-        $periodStart = $managedServicePeriod !== ''
-            ? Carbon::createFromFormat('Y-m', $managedServicePeriod)->startOfMonth()
+        $periodSelection = $this->normalizePeriodSelection($managedServicePeriodInput, $managedServiceYearInput, $managedServiceMonthInput);
+        $managedServiceYear = $periodSelection['year'];
+        $managedServiceMonth = $periodSelection['month'];
+        $periodMonth = $managedServiceMonth !== '' ? (int) $managedServiceMonth : null;
+        $periodStart = $managedServiceYear !== ''
+            ? Carbon::create((int) $managedServiceYear, $periodMonth ?? 1, 1)->startOfDay()
             : null;
-        $periodEnd = $periodStart?->copy()->endOfMonth();
+        $periodEnd = $periodStart
+            ? ($periodMonth !== null ? $periodStart->copy()->endOfMonth() : $periodStart->copy()->endOfYear())
+            : null;
 
-        $applyProjectPeriod = function ($builder) use ($periodStart, $periodEnd): void {
+        $applyProjectPeriod = function ($builder) use ($periodStart, $periodEnd, $periodMonth): void {
             if ($periodStart && $periodEnd) {
                 $builder->whereHas('project', fn ($projectQuery) => $projectQuery->whereBetween('tgl_kontrak', [$periodStart, $periodEnd]));
+            } elseif ($periodMonth !== null) {
+                $builder->whereHas('project', fn ($projectQuery) => $projectQuery->whereMonth('tgl_kontrak', $periodMonth));
             }
         };
 
-        $applyJoinedProjectPeriod = function ($builder) use ($periodStart, $periodEnd): void {
+        $applyJoinedProjectPeriod = function ($builder) use ($periodStart, $periodEnd, $periodMonth): void {
             if ($periodStart && $periodEnd) {
                 $builder->whereBetween('p.tgl_kontrak', [$periodStart, $periodEnd]);
+            } elseif ($periodMonth !== null) {
+                $builder->whereMonth('p.tgl_kontrak', $periodMonth);
             }
         };
 
@@ -537,14 +552,20 @@ class ChargeController extends Controller
             ->orderBy('employ_name')
             ->get(['employ_name']);
 
+        $monthExpression = DB::connection()->getDriverName() === 'sqlite'
+            ? "strftime('%Y-%m', tgl_kontrak)"
+            : 'DATE_FORMAT(tgl_kontrak, "%Y-%m")';
+
         $trendQuery = DB::table('project')
-            ->selectRaw('DATE_FORMAT(tgl_kontrak, "%Y-%m") as month, SUM(nilai_kontrak) as total_biaya')
+            ->selectRaw("{$monthExpression} as month, SUM(nilai_kontrak) as total_biaya")
             ->whereNotNull('tgl_kontrak')
-            ->groupByRaw('DATE_FORMAT(tgl_kontrak, "%Y-%m")')
+            ->groupByRaw($monthExpression)
             ->orderBy('month');
 
         if ($periodStart && $periodEnd) {
             $trendQuery->whereBetween('tgl_kontrak', [$periodStart, $periodEnd]);
+        } elseif ($periodMonth !== null) {
+            $trendQuery->whereMonth('tgl_kontrak', $periodMonth);
         }
 
         $trendData = $trendQuery->get();
@@ -552,12 +573,20 @@ class ChargeController extends Controller
         $chartLabels = $trendData->map(fn ($data) => Carbon::parse($data->month.'-01')->locale('id')->translatedFormat('F Y'))->values();
         $chartData = $trendData->pluck('total_biaya')->map(fn ($total) => (float) $total)->values();
 
+        $projectMonthExpression = DB::connection()->getDriverName() === 'sqlite'
+            ? "strftime('%Y-%m', p.tgl_kontrak)"
+            : 'DATE_FORMAT(p.tgl_kontrak, "%Y-%m")';
+
         $managedServicePeriodOptions = DB::table('project as p')
             ->whereNotNull('p.tgl_kontrak')
-            ->selectRaw('DATE_FORMAT(p.tgl_kontrak, "%Y-%m") as period')
+            ->selectRaw("{$projectMonthExpression} as period")
             ->distinct()
             ->orderByDesc('period')
             ->pluck('period')
+            ->values();
+        $managedServiceYearOptions = $managedServicePeriodOptions
+            ->map(fn ($period) => substr($period, 0, 4))
+            ->unique()
             ->values();
 
         $managedServiceRows = $dashboardRows
@@ -608,6 +637,8 @@ class ChargeController extends Controller
         $dashboardProjectsQuery = Project::query();
         if ($periodStart && $periodEnd) {
             $dashboardProjectsQuery->whereBetween('tgl_kontrak', [$periodStart, $periodEnd]);
+        } elseif ($periodMonth !== null) {
+            $dashboardProjectsQuery->whereMonth('tgl_kontrak', $periodMonth);
         }
 
         $dashboardBillingsQuery = ProjectBilling::query();
@@ -645,10 +676,37 @@ class ChargeController extends Controller
 
             'chartLabels' => $chartLabels,
             'chartData' => $chartData,
-            'managedServicePeriod' => $managedServicePeriod,
-            'managedServicePeriodOptions' => $managedServicePeriodOptions,
+            'managedServiceYear' => $managedServiceYear,
+            'managedServiceMonth' => $managedServiceMonth,
+            'managedServiceYearOptions' => $managedServiceYearOptions,
             'managedServiceStatusCounts' => $managedServiceStatusCounts,
             'managedServicePmSummary' => $managedServicePmSummary,
         ]);
+    }
+
+    /**
+     * @return array{year: string, month: string}
+     */
+    private function normalizePeriodSelection(mixed $legacyPeriod, mixed $yearInput, mixed $monthInput): array
+    {
+        $year = is_string($yearInput) ? trim($yearInput) : '';
+        $month = is_string($monthInput) ? trim($monthInput) : '';
+
+        if ($year === '' && $month === '' && is_string($legacyPeriod) && preg_match('/^(\d{4})-(\d{2})$/', $legacyPeriod, $matches) && checkdate((int) $matches[2], 1, (int) $matches[1])) {
+            $year = $matches[1];
+            $month = $matches[2];
+        }
+
+        if (! preg_match('/^\d{4}$/', $year) || ! checkdate(1, 1, (int) $year)) {
+            $year = '';
+        }
+
+        if (! preg_match('/^(0?[1-9]|1[0-2])$/', $month)) {
+            $month = '';
+        } else {
+            $month = str_pad($month, 2, '0', STR_PAD_LEFT);
+        }
+
+        return ['year' => $year, 'month' => $month];
     }
 }

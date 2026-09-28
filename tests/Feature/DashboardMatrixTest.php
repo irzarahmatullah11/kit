@@ -11,7 +11,7 @@ class DashboardMatrixTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_dashboard_displays_matrix_overview_and_rows(): void
+    public function test_dashboard_displays_matrix_filtered_by_selected_year_and_month(): void
     {
         DB::table('role')->insert([
             ['role_id' => 1, 'role_name' => 'pm'],
@@ -24,19 +24,26 @@ class DashboardMatrixTest extends TestCase
         ]);
 
         DB::table('project')->insert([
-            ['project_id' => 1, 'project_name' => 'Project ABC', 'user' => 'PT ABC', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/001', 'nilai_kontrak' => 1000000, 'tgl_kontrak' => '2026-03-01', 'pm_id' => 1, 'pmo_id' => 2, 'created_at' => now(), 'updated_at' => now()],
+            ['project_id' => 1, 'project_name' => 'Project ABC', 'user' => 'PT ABC', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/001', 'nilai_kontrak' => 1000000, 'tgl_kontrak' => '2026-03-01', 'pm' => 'Mr A', 'pmo' => 'Ms A', 'created_at' => now(), 'updated_at' => now()],
+            ['project_id' => 2, 'project_name' => 'Project DEF', 'user' => 'PT DEF', 'cost_center' => 'KDYYYY', 'no_kontrak' => 'INFRA/XXX/002', 'nilai_kontrak' => 2000000, 'tgl_kontrak' => '2025-03-01', 'pm' => 'Mr A', 'pmo' => 'Ms A', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         DB::table('project_billing')->insert([
             ['billing_id' => 1, 'project_id' => 1, 'kategori_layanan' => 'MS', 'tipe_pengadaan' => null, 'priode' => 'Juni', 'nilai_bulan' => 150000, 'due_date_kontrak' => null, 'tgl_pembuatan_ba' => '2026-03-01', 'tgl_paraf_pm' => '2026-03-02', 'tgl_submit_dokumen' => '2026-03-03', 'tgl_permintaan_invoice' => '2026-03-04', 'status' => 'Done', 'note' => 'test note', 'file_kontrak' => null, 'file_ba' => null],
+            ['billing_id' => 2, 'project_id' => 2, 'kategori_layanan' => 'MS', 'tipe_pengadaan' => null, 'priode' => 'Juni', 'nilai_bulan' => 250000, 'due_date_kontrak' => null, 'tgl_pembuatan_ba' => '2025-03-01', 'tgl_paraf_pm' => '2025-03-02', 'tgl_submit_dokumen' => '2025-03-03', 'tgl_permintaan_invoice' => '2025-03-04', 'status' => 'Done', 'note' => 'other year', 'file_kontrak' => null, 'file_ba' => null],
         ]);
 
-        $response = $this->get('/dashboard');
+        $response = $this->actingAs(Employ::findOrFail(1))->get('/dashboard?ms_year=2026&ms_month=03');
 
         $response->assertStatus(200);
         $response->assertSee('Matrix Dashboard');
-        $response->assertSee('Project billing matrix');
-        $response->assertSee('Project ABC');
+        $response->assertSeeText('1 project terdaftar');
+        $response->assertDontSeeText('2 project terdaftar');
+        $response->assertSeeText('Rp 1.000.000');
+        $response->assertSee('name="ms_year"', false);
+        $response->assertSee('name="ms_month"', false);
+        $response->assertSeeText('Tahun');
+        $response->assertSeeText('Bulan');
         $response->assertSee('Done');
     }
 
