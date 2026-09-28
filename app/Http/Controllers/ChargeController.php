@@ -34,12 +34,16 @@ class ChargeController extends Controller
 
     public function oneTime(Request $request): View
     {
-        return $this->page('one_time', ProjectBilling::where('kategori_layanan', 'OTM'), null, null, $request->query('search'));
+        $contractPeriod = $request->query('contract_period');
+
+        return $this->page('one_time', ProjectBilling::where('kategori_layanan', 'OTM'), null, null, $request->query('search'), [], null, null, null, is_string($contractPeriod) ? $contractPeriod : null);
     }
 
     public function monthly(Request $request): View
     {
-        return $this->page('monthly', ProjectBilling::where('kategori_layanan', 'MS'), null, null, $request->query('search'));
+        $contractPeriod = $request->query('contract_period');
+
+        return $this->page('monthly', ProjectBilling::where('kategori_layanan', 'MS'), null, null, $request->query('search'), [], null, null, null, is_string($contractPeriod) ? $contractPeriod : null);
     }
 
     public function show(ProjectBilling $charge): View
@@ -124,7 +128,8 @@ class ChargeController extends Controller
                             ->orWhere('no_kontrak', 'like', "%{$search}%")
                             ->orWhere('nilai_kontrak', 'like', "%{$search}%")
                             ->orWhere('tgl_kontrak', 'like', "%{$search}%")
-                            ->orWhere('pm', 'like', "%{$search}%");
+                            ->orWhere('pm', 'like', "%{$search}%")
+                            ->orWhere('pmo', 'like', "%{$search}%");
                     });
             });
         }
@@ -389,9 +394,22 @@ class ChargeController extends Controller
         return $paths;
     }
 
-    private function page(string $page, $query, ?string $status = null, ?string $service = null, ?string $search = null, array $filters = [], mixed $managedServicePeriodInput = null, mixed $managedServiceYearInput = null, mixed $managedServiceMonthInput = null): View
+    private function page(string $page, $query, mixed $status = null, mixed $service = null, mixed $search = null, array $filters = [], mixed $managedServicePeriodInput = null, mixed $managedServiceYearInput = null, mixed $managedServiceMonthInput = null, mixed $contractPeriodInput = null): View
     {
         $chargesQuery = $query->with('project')->latest('billing_id');
+
+        $contractPeriod = is_string($contractPeriodInput) ? trim($contractPeriodInput) : '';
+        $isValidContractPeriod = preg_match('/^(?!0000)\d{4}-(0[1-9]|1[0-2])$/', $contractPeriod) === 1;
+        $contractPeriod = $isValidContractPeriod ? $contractPeriod : '';
+
+        $contractPeriodStart = $contractPeriod !== ''
+            ? Carbon::createFromFormat('!Y-m', $contractPeriod)->startOfMonth()
+            : null;
+        $contractPeriodEnd = $contractPeriodStart?->copy()->endOfMonth();
+
+        if ($page !== 'dashboard' && $contractPeriodStart && $contractPeriodEnd) {
+            $chargesQuery->whereHas('project', fn ($projectQuery) => $projectQuery->whereBetween('tgl_kontrak', [$contractPeriodStart->toDateString(), $contractPeriodEnd->toDateString()]));
+        }
 
         $periodSelection = $this->normalizePeriodSelection($managedServicePeriodInput, $managedServiceYearInput, $managedServiceMonthInput);
         $managedServiceYear = $periodSelection['year'];
@@ -406,7 +424,7 @@ class ChargeController extends Controller
 
         $applyProjectPeriod = function ($builder) use ($periodStart, $periodEnd, $periodMonth): void {
             if ($periodStart && $periodEnd) {
-                $builder->whereHas('project', fn ($projectQuery) => $projectQuery->whereBetween('tgl_kontrak', [$periodStart, $periodEnd]));
+                $builder->whereHas('project', fn ($projectQuery) => $projectQuery->whereBetween('tgl_kontrak', [$periodStart->toDateString(), $periodEnd->toDateString()]));
             } elseif ($periodMonth !== null) {
                 $builder->whereHas('project', fn ($projectQuery) => $projectQuery->whereMonth('tgl_kontrak', $periodMonth));
             }
@@ -414,7 +432,7 @@ class ChargeController extends Controller
 
         $applyJoinedProjectPeriod = function ($builder) use ($periodStart, $periodEnd, $periodMonth): void {
             if ($periodStart && $periodEnd) {
-                $builder->whereBetween('p.tgl_kontrak', [$periodStart, $periodEnd]);
+                $builder->whereBetween('p.tgl_kontrak', [$periodStart->toDateString(), $periodEnd->toDateString()]);
             } elseif ($periodMonth !== null) {
                 $builder->whereMonth('p.tgl_kontrak', $periodMonth);
             }
@@ -438,7 +456,8 @@ class ChargeController extends Controller
                                 ->orWhere('no_kontrak', 'like', "%{$searchTerm}%")
                                 ->orWhere('nilai_kontrak', 'like', "%{$searchTerm}%")
                                 ->orWhere('tgl_kontrak', 'like', "%{$searchTerm}%")
-                                ->orWhere('pm', 'like', "%{$searchTerm}%");
+                                ->orWhere('pm', 'like', "%{$searchTerm}%")
+                                ->orWhere('pmo', 'like', "%{$searchTerm}%");
                         });
                 });
             }
@@ -563,7 +582,7 @@ class ChargeController extends Controller
             ->orderBy('month');
 
         if ($periodStart && $periodEnd) {
-            $trendQuery->whereBetween('tgl_kontrak', [$periodStart, $periodEnd]);
+            $trendQuery->whereBetween('tgl_kontrak', [$periodStart->toDateString(), $periodEnd->toDateString()]);
         } elseif ($periodMonth !== null) {
             $trendQuery->whereMonth('tgl_kontrak', $periodMonth);
         }
@@ -636,7 +655,7 @@ class ChargeController extends Controller
 
         $dashboardProjectsQuery = Project::query();
         if ($periodStart && $periodEnd) {
-            $dashboardProjectsQuery->whereBetween('tgl_kontrak', [$periodStart, $periodEnd]);
+            $dashboardProjectsQuery->whereBetween('tgl_kontrak', [$periodStart->toDateString(), $periodEnd->toDateString()]);
         } elseif ($periodMonth !== null) {
             $dashboardProjectsQuery->whereMonth('tgl_kontrak', $periodMonth);
         }
@@ -676,9 +695,14 @@ class ChargeController extends Controller
 
             'chartLabels' => $chartLabels,
             'chartData' => $chartData,
+            'managedServicePeriod' => $managedServiceYear !== '' && $managedServiceMonth !== ''
+                ? $managedServiceYear.'-'.$managedServiceMonth
+                : '',
+            'managedServicePeriodOptions' => $managedServicePeriodOptions,
             'managedServiceYear' => $managedServiceYear,
             'managedServiceMonth' => $managedServiceMonth,
             'managedServiceYearOptions' => $managedServiceYearOptions,
+            'contractPeriod' => $contractPeriod,
             'managedServiceStatusCounts' => $managedServiceStatusCounts,
             'managedServicePmSummary' => $managedServicePmSummary,
         ]);

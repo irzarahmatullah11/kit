@@ -422,10 +422,14 @@
                                 <div class="matrix-tools">
                                     <div class="matrix-filter-group">
                                         <label for="listSearch">Cari list</label>
-                                        <input id="listSearch" type="search" name="search" value="{{ request('search') }}" placeholder="Cari PM, project, USER, kontrak...">
+                                        <input id="listSearch" type="search" name="search" value="{{ request('search') }}" placeholder="Cari PM/PMO, project, USER, No. Kontrak, Cost Center...">
+                                    </div>
+                                    <div class="matrix-filter-group">
+                                        <label for="contractPeriod">Bulan &amp; Tahun Tanggal Kontrak</label>
+                                        <input id="contractPeriod" type="month" name="contract_period" value="{{ $contractPeriod }}">
                                     </div>
                                     <button class="matrix-filter-button" type="submit">Cari</button>
-                                    @if (request('search'))
+                                    @if (request('search') || request('contract_period'))
                                         <a class="matrix-clear-link" href="{{ $page === 'one_time' ? route('charges.one-time') : route('charges.monthly') }}">Reset</a>
                                     @endif
                                 </div>
