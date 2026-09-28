@@ -430,6 +430,7 @@
                                                 <tr>
                                                     <th>No.</th>
                                                     <th>PM</th>
+                                                    <th>Project</th>
                                                     <th>USER</th>
                                                     <th>Type Pengadaan</th>
                                                     <th>Cost Center</th>
@@ -452,9 +453,10 @@
                                             </thead>
                                             <tbody>
                                                 @foreach ($charges as $index => $row)
-                                                    <tr data-hover-detail="{{ route('charges.show', $row) }}">
+                                                    <tr>
                                                         <td>{{ $charges->firstItem() + $index }}</td>
                                                         <td>{{ $row->project?->pm ?: '-' }}</td>
+                                                        <td>{{ $row->project?->project_name ?: '-' }}</td>
                                                         <td>{{ $row->user_name ?: '-' }}</td>
                                                         <td>{{ $row->procurement_type }}</td>
                                                         <td>{{ $row->cost_center ?: '-' }}</td>
@@ -468,7 +470,7 @@
                                                         <td>{{ $row->tgl_ttd_manager?->translatedFormat('d M Y') ?: '-' }}</td>
                                                         <td>{{ $row->tgl_submit_dokumen?->translatedFormat('d M Y') ?: '-' }}</td>
                                                         <td>{{ $row->tgl_permintaan_invoice?->translatedFormat('d M Y') ?: '-' }}</td>
-                                                        <td>
+                                                        <td data-hover-detail="{{ route('charges.show', $row) }}">
                                                             <button type="button" class="payment-status-button {{ $row->status === 'Done' ? 'status-done' : 'status-progress' }}">
                                                                 {{ $row->status === 'Done' ? 'Done' : 'On progress' }}
                                                             </button>
@@ -535,7 +537,7 @@
                                             </thead>
                                             <tbody>
                                                 @foreach ($charges as $index => $row)
-                                                    <tr data-hover-detail="{{ route('charges.show', $row) }}">
+                                                    <tr>
                                                         <td>{{ $charges->firstItem() + $index }}</td>
                                                         <td>{{ $row->name }}</td>
                                                         <td>{{ $row->user_name ?: '-' }}</td>
@@ -552,7 +554,7 @@
                                                         <td>{{ $row->tgl_ttd_manager?->translatedFormat('d M Y') ?: '-' }}</td>
                                                         <td>{{ $row->tgl_submit_dokumen?->translatedFormat('d M Y') ?: '-' }}</td>
                                                         <td>{{ $row->tgl_permintaan_invoice?->translatedFormat('d M Y') ?: '-' }}</td>
-                                                        <td>
+                                                        <td data-hover-detail="{{ route('charges.show', $row) }}">
                                                             <button type="button" class="payment-status-button {{ $row->status === 'Done' ? 'status-done' : 'status-progress' }}">
                                                                 {{ $row->status === 'Done' ? 'Done' : 'On progress' }}
                                                             </button>
