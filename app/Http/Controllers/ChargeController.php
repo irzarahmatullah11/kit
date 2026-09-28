@@ -34,16 +34,36 @@ class ChargeController extends Controller
 
     public function oneTime(Request $request): View
     {
-        $contractPeriod = $request->query('contract_period');
-
-        return $this->page('one_time', ProjectBilling::where('kategori_layanan', 'OTM'), null, null, $request->query('search'), [], null, null, null, is_string($contractPeriod) ? $contractPeriod : null);
+        return $this->page(
+            'one_time',
+            ProjectBilling::where('kategori_layanan', 'OTM'),
+            null,
+            null,
+            $request->query('search'),
+            [],
+            null,
+            null,
+            null,
+            $request->query('contract_year'),
+            $request->query('contract_month')
+        );
     }
 
     public function monthly(Request $request): View
     {
-        $contractPeriod = $request->query('contract_period');
-
-        return $this->page('monthly', ProjectBilling::where('kategori_layanan', 'MS'), null, null, $request->query('search'), [], null, null, null, is_string($contractPeriod) ? $contractPeriod : null);
+        return $this->page(
+            'monthly',
+            ProjectBilling::where('kategori_layanan', 'MS'),
+            null,
+            null,
+            $request->query('search'),
+            [],
+            null,
+            null,
+            null,
+            $request->query('contract_year'),
+            $request->query('contract_month')
+        );
     }
 
     public function show(ProjectBilling $charge): View
@@ -394,21 +414,25 @@ class ChargeController extends Controller
         return $paths;
     }
 
-    private function page(string $page, $query, mixed $status = null, mixed $service = null, mixed $search = null, array $filters = [], mixed $managedServicePeriodInput = null, mixed $managedServiceYearInput = null, mixed $managedServiceMonthInput = null, mixed $contractPeriodInput = null): View
+    private function page(string $page, $query, mixed $status = null, mixed $service = null, mixed $search = null, array $filters = [], mixed $managedServicePeriodInput = null, mixed $managedServiceYearInput = null, mixed $managedServiceMonthInput = null, mixed $contractYearInput = null, mixed $contractMonthInput = null): View
     {
         $chargesQuery = $query->with('project')->latest('billing_id');
 
-        $contractPeriod = is_string($contractPeriodInput) ? trim($contractPeriodInput) : '';
-        $isValidContractPeriod = preg_match('/^(?!0000)\d{4}-(0[1-9]|1[0-2])$/', $contractPeriod) === 1;
-        $contractPeriod = $isValidContractPeriod ? $contractPeriod : '';
-
-        $contractPeriodStart = $contractPeriod !== ''
-            ? Carbon::createFromFormat('!Y-m', $contractPeriod)->startOfMonth()
+        $contractPeriodSelection = $this->normalizePeriodSelection(null, $contractYearInput, $contractMonthInput);
+        $contractYear = $contractPeriodSelection['year'];
+        $contractMonth = $contractPeriodSelection['month'];
+        $contractMonthNumber = $contractMonth !== '' ? (int) $contractMonth : null;
+        $contractPeriodStart = $contractYear !== ''
+            ? Carbon::create((int) $contractYear, $contractMonthNumber ?? 1, 1)->startOfDay()
             : null;
-        $contractPeriodEnd = $contractPeriodStart?->copy()->endOfMonth();
+        $contractPeriodEnd = $contractPeriodStart
+            ? ($contractMonthNumber !== null ? $contractPeriodStart->copy()->endOfMonth() : $contractPeriodStart->copy()->endOfYear())
+            : null;
 
         if ($page !== 'dashboard' && $contractPeriodStart && $contractPeriodEnd) {
             $chargesQuery->whereHas('project', fn ($projectQuery) => $projectQuery->whereBetween('tgl_kontrak', [$contractPeriodStart->toDateString(), $contractPeriodEnd->toDateString()]));
+        } elseif ($page !== 'dashboard' && $contractMonthNumber !== null) {
+            $chargesQuery->whereHas('project', fn ($projectQuery) => $projectQuery->whereMonth('tgl_kontrak', $contractMonthNumber));
         }
 
         $periodSelection = $this->normalizePeriodSelection($managedServicePeriodInput, $managedServiceYearInput, $managedServiceMonthInput);
@@ -702,7 +726,8 @@ class ChargeController extends Controller
             'managedServiceYear' => $managedServiceYear,
             'managedServiceMonth' => $managedServiceMonth,
             'managedServiceYearOptions' => $managedServiceYearOptions,
-            'contractPeriod' => $contractPeriod,
+            'contractYear' => $contractYear,
+            'contractMonth' => $contractMonth,
             'managedServiceStatusCounts' => $managedServiceStatusCounts,
             'managedServicePmSummary' => $managedServicePmSummary,
         ]);

@@ -167,20 +167,26 @@ class DashboardMatrixTest extends TestCase
     {
         $employee = $this->createChargeRowsForContractPeriodFilter('OTM');
 
-        $response = $this->actingAs($employee)->get('/payments/one-time?contract_period=2026-03');
+        $response = $this->actingAs($employee)->get('/payments/one-time?contract_month=03&contract_year=2026');
 
         $response->assertViewHas('charges', fn ($charges) => $charges->pluck('project.project_name')->all() === ['Project March 2026']);
-        $response->assertSee('name="contract_period" value="2026-03"', false);
+        $response->assertSee('name="contract_month"', false);
+        $response->assertSee('name="contract_year"', false);
+        $response->assertSee('value="03" selected', false);
+        $response->assertSee('value="2026" selected', false);
     }
 
     public function test_monthly_list_can_filter_by_contract_month_and_year(): void
     {
         $employee = $this->createChargeRowsForContractPeriodFilter('MS');
 
-        $response = $this->actingAs($employee)->get('/payments/monthly?contract_period=2026-03');
+        $response = $this->actingAs($employee)->get('/payments/monthly?contract_month=03&contract_year=2026');
 
         $response->assertViewHas('charges', fn ($charges) => $charges->pluck('project.project_name')->all() === ['Project March 2026']);
-        $response->assertSee('name="contract_period" value="2026-03"', false);
+        $response->assertSee('name="contract_month"', false);
+        $response->assertSee('name="contract_year"', false);
+        $response->assertSee('value="03" selected', false);
+        $response->assertSee('value="2026" selected', false);
     }
 
     public function test_dashboard_can_export_xlsx_for_current_filtered_rows(): void

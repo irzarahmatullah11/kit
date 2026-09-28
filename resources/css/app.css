@@ -141,8 +141,9 @@ button, input, textarea { font: inherit; }
 .status-detail-content span { color: var(--muted); font-size: 12px; }
 .clear-filter-link { color: var(--blue); font-size: 12px; font-weight: 700; text-decoration: none; }
 .clear-filter-link:hover { text-decoration: underline; }
-.matrix-tools { margin-bottom: 18px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: #f7faf9; }
+.matrix-tools { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-bottom: 18px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: #f7faf9; }
 .matrix-filter-form { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.matrix-filter-form .matrix-tools { width: 100%; }
 .matrix-filter-group { display: flex; flex-direction: column; gap: 6px; min-width: 170px; }
 .matrix-filter-group label { color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
 .matrix-filter-group select,
@@ -356,4 +357,3 @@ button, input, textarea { font: inherit; }
     justify-content: center;
     padding: 0;
 }
-
