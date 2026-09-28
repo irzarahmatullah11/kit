@@ -33,12 +33,21 @@
                             <strong>Ringkasan dashboard</strong>
                         </div>
                         <form method="GET" action="{{ route('dashboard') }}" class="dashboard-period-filter">
-                            <label for="dashboard-period">Periode</label>
-                            <select id="dashboard-period" name="ms_period" onchange="this.form.submit()">
-                                <option value="">Semua Periode</option>
-                                @foreach ($managedServicePeriodOptions ?? [] as $period)
-                                    <option value="{{ $period }}" @selected(($managedServicePeriod ?? '') === $period)>
-                                        {{ \Carbon\Carbon::createFromFormat('Y-m', $period)->locale('id')->translatedFormat('F Y') }}
+                            <label for="dashboard-year">Tahun</label>
+                            <select id="dashboard-year" name="ms_year" onchange="this.form.submit()">
+                                <option value="">Semua Tahun</option>
+                                @foreach ($managedServiceYearOptions ?? [] as $year)
+                                    <option value="{{ $year }}" @selected(($managedServiceYear ?? '') === (string) $year)>
+                                        {{ $year }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <label for="dashboard-month">Bulan</label>
+                            <select id="dashboard-month" name="ms_month" onchange="this.form.submit()">
+                                <option value="">Semua Bulan</option>
+                                @foreach (range(1, 12) as $month)
+                                    <option value="{{ sprintf('%02d', $month) }}" @selected(($managedServiceMonth ?? '') === sprintf('%02d', $month))>
+                                        {{ \Carbon\Carbon::create(2000, $month, 1)->locale('id')->translatedFormat('F') }}
                                     </option>
                                 @endforeach
                             </select>
