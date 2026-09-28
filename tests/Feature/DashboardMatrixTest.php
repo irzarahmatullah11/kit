@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Employ;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -138,8 +139,8 @@ class DashboardMatrixTest extends TestCase
         ]);
 
         DB::table('project')->insert([
-            ['project_id' => 1, 'project_name' => 'Project ABC', 'user' => 'PT ABC', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/001', 'nilai_kontrak' => 1000000, 'tgl_kontrak' => '2026-03-01', 'pm_id' => 1, 'pmo_id' => 2, 'created_at' => now(), 'updated_at' => now()],
-            ['project_id' => 2, 'project_name' => 'Project DEF', 'user' => 'PT DEF', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/002', 'nilai_kontrak' => 2000000, 'tgl_kontrak' => '2026-03-02', 'pm_id' => 1, 'pmo_id' => 2, 'created_at' => now(), 'updated_at' => now()],
+            ['project_id' => 1, 'project_name' => 'Project ABC', 'user' => 'PT ABC', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/001', 'nilai_kontrak' => 1000000, 'tgl_kontrak' => '2026-03-01', 'pm' => 'Mr A', 'pmo' => 'Ms A', 'created_at' => now(), 'updated_at' => now()],
+            ['project_id' => 2, 'project_name' => 'Project DEF', 'user' => 'PT DEF', 'cost_center' => 'KDXXXX', 'no_kontrak' => 'INFRA/XXX/002', 'nilai_kontrak' => 2000000, 'tgl_kontrak' => '2026-03-02', 'pm' => 'Mr A', 'pmo' => 'Ms A', 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         DB::table('project_billing')->insert([
@@ -147,11 +148,12 @@ class DashboardMatrixTest extends TestCase
             ['billing_id' => 2, 'project_id' => 2, 'kategori_layanan' => 'OTM', 'tipe_pengadaan' => 'Renewal', 'priode' => 'Juli', 'nilai_bulan' => 250000, 'due_date_kontrak' => '2026-03-20', 'tgl_pembuatan_ba' => '2026-03-05', 'tgl_paraf_pm' => '2026-03-06', 'tgl_submit_dokumen' => '2026-03-07', 'tgl_permintaan_invoice' => '2026-03-08', 'status' => 'In Progress', 'note' => 'other note', 'file_kontrak' => null, 'file_ba' => null],
         ]);
 
-        $response = $this->get('/payments/one-time?search=Project DEF');
+        $response = $this->actingAs(Employ::findOrFail(1))->get('/payments/one-time?search=Project DEF');
 
-        $response->assertStatus(200);
-        $response->assertSee('Project DEF');
-        $response->assertDontSee('Project ABC');
+        $response->assertSeeInOrder(['<th>PM</th>', '<th>Project</th>'], false);
+        $response->assertSeeInOrder(['<td data-hover-detail=', '<button type="button" class="payment-status-button'], false);
+        $response->assertDontSee('<tr data-hover-detail=', false);
+        $response->assertSeeText('Project DEF');
     }
 
     public function test_dashboard_can_export_xlsx_for_current_filtered_rows(): void

@@ -41,7 +41,20 @@
                 <div class="form-row"><div class="field-group"><label>Paraf PM</label><input type="date" name="tgl_paraf_pm" value="{{ old('tgl_paraf_pm', $charge->tgl_paraf_pm?->format('Y-m-d')) }}"></div><div class="field-group"><label>TTD Manager</label><input type="date" name="tgl_ttd_manager" value="{{ old('tgl_ttd_manager', $charge->tgl_ttd_manager?->format('Y-m-d')) }}"></div></div>
                 <div class="form-row"><div class="field-group"><label>Dokumen BA/LHP dikirim ke user</label><input type="date" name="tgl_submit_dokumen" value="{{ old('tgl_submit_dokumen', $charge->tgl_submit_dokumen?->format('Y-m-d')) }}"></div><div class="field-group"><label>Permintaan invoice keuangan KIT</label><input type="date" name="tgl_permintaan_invoice" value="{{ old('tgl_permintaan_invoice', $charge->tgl_permintaan_invoice?->format('Y-m-d')) }}"></div></div>
                 <div class="field-group"><label>Note (Catatan / Informasi)</label><textarea name="note" rows="3">{{ old('note', $charge->note_1 ?? $charge->note) }}</textarea></div>
-                <div class="form-row"><div class="field-group"><label for="file_kontrak">File kontrak (PDF)</label><input id="file_kontrak" name="file_kontrak" type="file" accept="application/pdf,.pdf"><x-input-error :messages="$errors->get('file_kontrak')" /></div><div class="field-group"><label for="file_ba">File BA (PDF)</label><input id="file_ba" name="file_ba" type="file" accept="application/pdf,.pdf"><x-input-error :messages="$errors->get('file_ba')" /></div></div>
+                <div class="form-row">
+                    <div class="field-group">
+                        <label for="file_kontrak">File kontrak (PDF)</label>
+                        <input id="file_kontrak" name="file_kontrak" type="file" accept="application/pdf,.pdf">
+                        <small>File saat ini: {{ $charge->file_kontrak ? basename($charge->file_kontrak) : 'Belum ada file' }}</small>
+                        <x-input-error :messages="$errors->get('file_kontrak')" />
+                    </div>
+                    <div class="field-group">
+                        <label for="file_ba">File BA (PDF)</label>
+                        <input id="file_ba" name="file_ba" type="file" accept="application/pdf,.pdf">
+                        <small>File saat ini: {{ $charge->file_ba ? basename($charge->file_ba) : 'Belum ada file' }}</small>
+                        <x-input-error :messages="$errors->get('file_ba')" />
+                    </div>
+                </div>
                 <div class="edit-actions"><a class="cancel-link" href="{{ route('dashboard') }}">Batal</a><button class="submit-button" type="submit">Simpan perubahan</button></div>
             </form>
         </section>
