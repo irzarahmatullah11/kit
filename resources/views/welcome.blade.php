@@ -420,16 +420,34 @@
 
                             <form class="matrix-filter-form" method="GET" action="{{ $page === 'one_time' ? route('charges.one-time') : route('charges.monthly') }}">
                                 <div class="matrix-tools">
-                                    <div class="matrix-filter-group">
+                                    <div class="matrix-filter-group matrix-search-group">
                                         <label for="listSearch">Cari list</label>
                                         <input id="listSearch" type="search" name="search" value="{{ request('search') }}" placeholder="Cari PM/PMO, project, USER, No. Kontrak, Cost Center...">
                                     </div>
                                     <div class="matrix-filter-group">
-                                        <label for="contractPeriod">Bulan &amp; Tahun Tanggal Kontrak</label>
-                                        <input id="contractPeriod" type="month" name="contract_period" value="{{ $contractPeriod }}">
+                                        <label for="contractMonth">Bulan Tanggal Kontrak</label>
+                                        <select id="contractMonth" name="contract_month">
+                                            <option value="">Semua Bulan</option>
+                                            @foreach (range(1, 12) as $month)
+                                                <option value="{{ sprintf('%02d', $month) }}" @selected(($contractMonth ?? '') === sprintf('%02d', $month))>
+                                                    {{ \Carbon\Carbon::create(2000, $month, 1)->locale('id')->translatedFormat('F') }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="matrix-filter-group">
+                                        <label for="contractYear">Tahun Tanggal Kontrak</label>
+                                        <select id="contractYear" name="contract_year">
+                                            <option value="">Semua Tahun</option>
+                                            @foreach ($managedServiceYearOptions ?? [] as $year)
+                                                <option value="{{ $year }}" @selected(($contractYear ?? '') === (string) $year)>
+                                                    {{ $year }}
+                                                </option>
+                                            @endforeach
+                                        </select>
                                     </div>
                                     <button class="matrix-filter-button" type="submit">Cari</button>
-                                    @if (request('search') || request('contract_period'))
+                                    @if (request('search') || request('contract_month') || request('contract_year'))
                                         <a class="matrix-clear-link" href="{{ $page === 'one_time' ? route('charges.one-time') : route('charges.monthly') }}">Reset</a>
                                     @endif
                                 </div>
