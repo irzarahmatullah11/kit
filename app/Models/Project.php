@@ -13,5 +13,4 @@ class Project extends Model
     protected $casts = ['nilai_kontrak' => 'decimal:2', 'tgl_kontrak' => 'date'];
 
     protected $fillable = ['project_name', 'user', 'cost_center', 'no_kontrak', 'nilai_kontrak', 'tgl_kontrak', 'pm', 'pmo'];
-
 }

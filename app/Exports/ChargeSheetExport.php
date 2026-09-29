@@ -12,7 +12,7 @@ abstract class ChargeSheetExport implements Export
     protected function queryForService(string $service): Builder
     {
         return (clone $this->baseQuery)
-            ->with('project.pm', 'project.pmo')
+            ->with('project')
             ->where('kategori_layanan', $service);
     }
 

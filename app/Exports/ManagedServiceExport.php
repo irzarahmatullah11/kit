@@ -36,8 +36,8 @@ class ManagedServiceExport extends ChargeSheetExport implements FromQuery, Shoul
         return [
             $this->value($row->project?->project_name),
             $this->value($row->project?->user),
-            $this->value($row->project?->pm?->employ_name),
-            $this->value($row->project?->pmo?->employ_name),
+            $this->value($row->project?->pm),
+            $this->value($row->project?->pmo),
             $this->value($row->priode),
             $this->value($row->project?->cost_center),
             $this->value($row->project?->no_kontrak),

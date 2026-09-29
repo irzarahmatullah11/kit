@@ -33,7 +33,7 @@ class OneTimeChargeExport extends ChargeSheetExport implements FromQuery, Should
     {
         /** @var ProjectBilling $row */
         return [
-            $this->value($row->project?->pm?->employ_name),
+            $this->value($row->project?->pm),
             $this->value($row->project?->project_name),
             $this->value($row->project?->user),
             $this->value($row->tipe_pengadaan),

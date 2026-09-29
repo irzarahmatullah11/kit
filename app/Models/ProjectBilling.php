@@ -47,7 +47,7 @@ class ProjectBilling extends Model
 
     protected function pm(): Attribute
     {
-        return Attribute::get(fn () => $this->project?->pm?->employ_name);
+        return Attribute::get(fn () => $this->project?->pm);
     }
 
     protected function userName(): Attribute
